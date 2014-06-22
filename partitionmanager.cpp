@@ -1622,8 +1622,8 @@ void TWPartitionManager::UnMount_Main_Partitions(void) {
 
 int TWPartitionManager::Partition_SDCard(void) {
 	char mkdir_path[255], temp[255], line[512];
-	string Command, Device, fat_str, ext_str, swap_str, start_loc, end_loc, ext_format, sd_path, tmpdevice;
-	int ext, swap, total_size = 0, fat_size;
+	string Command, Device, fat_str, ext_str, system_str, data_str, start_loc, end_loc, ext_format, sd_path, tmpdevice;
+	int ext, system, data, total_size = 0, fat_size;
 	FILE* fp;
 
 	gui_print("Partitioning SD Card...\n");
@@ -1645,6 +1645,8 @@ int TWPartitionManager::Partition_SDCard(void) {
 	}
 
 	TWFunc::Exec_Cmd("umount \"$SWAPPATH\"");
+	TWFunc::Exec_Cmd("umount /data");
+	TWFunc::Exec_Cmd("umount /system");
 	Device = SDCard->Actual_Block_Device;
 	// Just use the root block device
 	Device.resize(strlen("/dev/block/mmcblkX"));
@@ -1676,10 +1678,11 @@ int TWPartitionManager::Partition_SDCard(void) {
 	fclose(fp);
 
 	DataManager::GetValue("tw_sdext_size", ext);
-	DataManager::GetValue("tw_swap_size", swap);
+	DataManager::GetValue("tw_os2sdsystem_size", system);
+	DataManager::GetValue("tw_os2sddata_size", data);
 	DataManager::GetValue("tw_sdpart_file_system", ext_format);
-	fat_size = total_size - ext - swap;
-	LOGINFO("sd card block device is '%s', sdcard size is: %iMB, fat size: %iMB, ext size: %iMB, ext system: '%s', swap size: %iMB\n", Device.c_str(), total_size, fat_size, ext, ext_format.c_str(), swap);
+	fat_size = total_size - ext - system -data;
+//	LOGINFO("sd card block device is '%s', sdcard size is: %iMB, fat size: %iMB, ext size: %iMB, ext system: '%s', swap size: %iMB\n", Device.c_str(), total_size, fat_size, ext, ext_format.c_str(), swap);
 	memset(temp, 0, sizeof(temp));
 	sprintf(temp, "%i", fat_size);
 	fat_str = temp;
@@ -1687,10 +1690,13 @@ int TWPartitionManager::Partition_SDCard(void) {
 	sprintf(temp, "%i", fat_size + ext);
 	ext_str = temp;
 	memset(temp, 0, sizeof(temp));
-	sprintf(temp, "%i", fat_size + ext + swap);
-	swap_str = temp;
-	if (ext + swap > total_size) {
-		LOGERR("EXT + Swap size is larger than sdcard size.\n");
+	sprintf(temp, "%i", fat_size + ext + system);
+	system_str = temp;
+	memset(temp, 0, sizeof(temp));
+	sprintf(temp, "%i", fat_size + ext + system + data);
+	data_str = temp;
+	if (ext + system + data > total_size) {
+		LOGERR("EXT + OS2SD size is larger than sdcard size.\n");
 		return false;
 	}
 	gui_print("Removing partition table...\n");
@@ -1718,12 +1724,22 @@ int TWPartitionManager::Partition_SDCard(void) {
 			return false;
 		}
 	}
-	if (swap > 0) {
-		gui_print("Creating swap partition...\n");
-		Command = "parted " + Device + " mkpartfs primary linux-swap " + ext_str + "MB " + swap_str + "MB";
+	if (system > 0) {
+		gui_print("Creating System partition...\n");
+		Command = "parted " + Device + " mkpartfs primary ext2 " + ext_str + "MB " + system_str + "MB";
 		LOGINFO("Command is: '%s'\n", Command.c_str());
 		if (TWFunc::Exec_Cmd(Command) != 0) {
-			LOGERR("Unable to create swap partition.\n");
+			LOGERR("Unable to create System partition.\n");
+			Update_System_Details();
+			return false;
+		}
+	}
+	if (data > 0) {
+		gui_print("Creating Data partition...\n");
+		Command = "parted " + Device + " mkpartfs primary ext2 " + system_str + "MB " + data_str + "MB";
+		LOGINFO("Command is: '%s'\n", Command.c_str());
+		if (TWFunc::Exec_Cmd(Command) != 0) {
+			LOGERR("Unable to create Data partition.\n");
 			Update_System_Details();
 			return false;
 		}
@@ -1757,6 +1773,18 @@ int TWPartitionManager::Partition_SDCard(void) {
 		Command = "mke2fs -t " + ext_format + " -m 0 " + SDext->Actual_Block_Device;
 		gui_print("Formatting sd-ext as %s...\n", ext_format.c_str());
 		LOGINFO("Formatting sd-ext after partitioning, command: '%s'\n", Command.c_str());
+		TWFunc::Exec_Cmd(Command);
+	}
+	if (system > 0) {
+		Command = "mke2fs -t ext4 -m 0 /dev/block/mmcblk0p3";
+		gui_print("Formatting OS2SD System as ext4");
+		LOGINFO("Formatting OS2SD System after partitioning, command: '%s'\n", Command.c_str());
+		TWFunc::Exec_Cmd(Command);
+	}
+	if (data > 0) {
+		Command = "mke2fs -t ext4 -m 0 /dev/block/mmcblk0p4";
+		gui_print("Formatting OS2SD Data as ext4");
+		LOGINFO("Formatting OS2SD Data after partitioning, command: '%s'\n", Command.c_str());
 		TWFunc::Exec_Cmd(Command);
 	}
 

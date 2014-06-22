@@ -4,8 +4,8 @@
 	<details>
 		<resolution width="320" height="480" />
 		<author>TeamWin</author>
-		<title>Backup Naowz</title>
-		<description>Default basic theme</description>
+		<title>Backup Naowz (NOW WITH OS2SD!)</title>
+		<description>Optimus v/s theme to handle formating</description>
 		<preview>preview.jpg</preview>
 	</details>
 
@@ -206,7 +206,7 @@
 			<object type="text" color="%text_color%">
 				<font resource="font" />
 				<placement x="65" y="3" />
-				<text>TeamWin Recovery v%tw_version%</text>
+				<text>TeamWin Recovery v%tw_version%-OS2SD</text>
 			</object>
 
 			<object type="text" color="%text_color%">
@@ -2884,22 +2884,46 @@
 				<font resource="font" color="%button_text_color%" />
 				<text></text>
 				<image resource="minus_button" />
-				<action function="addsubtract">tw_swap_size-32</action>
+				<action function="addsubtract">tw_os2sdsystem_size-128</action>
 			</object>
 
 			<object type="button">
 				<highlight color="%highlight_color%" />
-				<placement x="%sd_plus_x%" y="%sdswap_button_y%" />
+				<placement x="%back_button_x%" y="%sdswap_button_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text></text>
 				<image resource="plus_button" />
-				<action function="addsubtract">tw_swap_size+32</action>
+				<action function="addsubtract">tw_os2sdsystem_size+128</action>
 			</object>
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="%sdswap_text_x%" y="%sdswap_text_y%" />
-				<text>Swap Size: %tw_swap_size%</text>
+				<placement x="%col3_medium_x%" y="%sdswap_button_y%" placement="4" />
+				<text>OS2SD System Size: %tw_os2sdsystem_size%</text>
+			</object>
+
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<placement x="%col1_x%" y="%row1_text_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text></text>
+				<image resource="minus_button" />
+				<action function="addsubtract">tw_os2sddata_size-128</action>
+			</object>
+
+			<object type="button">
+				<highlight color="%highlight_color%" />
+				<placement x="%back_button_x%" y="%row1_text_y%" />
+				<font resource="font" color="%button_text_color%" />
+				<text></text>
+				<image resource="plus_button" />
+				<action function="addsubtract">tw_os2sddata_size+128</action>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%col3_medium_x%" y="%row1_text_y%" placement="4" />
+				<text>OS2SD Data Size: %tw_os2sddata_size%</text>
 			</object>
 
 			<object type="text" color="%text_color%">
