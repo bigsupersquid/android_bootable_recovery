@@ -2766,6 +2766,14 @@
 			<object type="checkbox">
 				<placement x="%col1_x%" y="%row6_text_y%" />
 				<font resource="font" color="%text_color%" />
+				<text>Flash non-device-specific zips to OS2SD.</text>
+				<data variable="tw_flash_os2sd" />
+				<image checked="checkbox_true" unchecked="checkbox_false" />
+			</object>
+
+			<object type="checkbox">
+				<placement x="%col1_x%" y="%row7_text_y%" />
+				<font resource="font" color="%text_color%" />
 				<text>Simulate actions for theme testing.</text>
 				<data variable="tw_simulate_actions" />
 				<image checked="checkbox_true" unchecked="checkbox_false" />
@@ -2773,7 +2781,7 @@
 
 			<object type="checkbox">
 				<condition var1="tw_simulate_actions" var2="1" />
-				<placement x="%col1_x%" y="%row7_text_y%" />
+				<placement x="%col1_x%" y="%row8_text_y%" />
 				<font resource="font" color="%text_color%" />
 				<text>Simulate failure for actions.</text>
 				<data variable="tw_simulate_fail" />
@@ -3204,7 +3212,7 @@
 
 			<object type="button">
 				<highlight color="%highlight_color%" />
-				<placement x="%col1_x%" y="%row1_y%" />
+				<placement x="%col1_x%" y="%row2_text_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text></text>
 				<image resource="minus_button" />
@@ -3213,7 +3221,7 @@
 
 			<object type="button">
 				<highlight color="%highlight_color%" />
-				<placement x="%back_button_x%" y="%row1_y%" />
+				<placement x="%back_button_x%" y="%row2_text_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text></text>
 				<image resource="plus_button" />
@@ -3222,13 +3230,13 @@
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="%sdext_text_x%" y="%sdext_text_y%" />
+				<placement x="%col3_medium_x%" y="%row2_text_y%" placement="4" />
 				<text>EXT Size: %tw_sdext_size%</text>
 			</object>
 
 			<object type="button">
 				<highlight color="%highlight_color%" />
-				<placement x="%col1_x%" y="%row3_text_y%" />
+				<placement x="%col1_x%" y="%row4_text_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text></text>
 				<image resource="minus_button" />
@@ -3237,7 +3245,7 @@
 
 			<object type="button">
 				<highlight color="%highlight_color%" />
-				<placement x="%back_button_x%" y="%row3_text_y%" />
+				<placement x="%back_button_x%" y="%row4_text_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text></text>
 				<image resource="plus_button" />
@@ -3246,7 +3254,7 @@
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="%col3_medium_x%" y="%row3_text_y%" placement="4" />
+				<placement x="%col3_medium_x%" y="%row4_text_y%" placement="4" />
 				<text>OS2SD System Size: %tw_os2sdsystem_size%</text>
 			</object>
 
@@ -3272,6 +3280,12 @@
 				<font resource="font" />
 				<placement x="%col3_medium_x%" y="%row6_text_y%" placement="4" />
 				<text>OS2SD Data Size: %tw_os2sddata_size%</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<font resource="font" />
+				<placement x="%col3_medium_x%" y="%row8_text_y%" placement="4" />
+				<text>FAT32 Partition Size: %tw_fat_size%</text>
 			</object>
 
 			<object type="text" color="%text_color%">
