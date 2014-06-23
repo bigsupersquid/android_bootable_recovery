@@ -2865,7 +2865,7 @@
 
 			<object type="button">
 				<highlight color="%highlight_color%" />
-				<placement x="%sd_plus_x%" y="%row1_y%" />
+				<placement x="%back_button_x%" y="%row1_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text></text>
 				<image resource="plus_button" />
@@ -2880,7 +2880,7 @@
 
 			<object type="button">
 				<highlight color="%highlight_color%" />
-				<placement x="%col1_x%" y="%sdswap_button_y%" />
+				<placement x="%col1_x%" y="%row3_text_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text></text>
 				<image resource="minus_button" />
@@ -2889,7 +2889,7 @@
 
 			<object type="button">
 				<highlight color="%highlight_color%" />
-				<placement x="%back_button_x%" y="%sdswap_button_y%" />
+				<placement x="%back_button_x%" y="%row3_text_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text></text>
 				<image resource="plus_button" />
@@ -2898,13 +2898,13 @@
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="%col3_medium_x%" y="%sdswap_button_y%" placement="4" />
+				<placement x="%col3_medium_x%" y="%row3_text_y%" placement="4" />
 				<text>OS2SD System Size: %tw_os2sdsystem_size%</text>
 			</object>
 
 			<object type="button">
 				<highlight color="%highlight_color%" />
-				<placement x="%col1_x%" y="%row1_text_y%" />
+				<placement x="%col1_x%" y="%row6_text_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text></text>
 				<image resource="minus_button" />
@@ -2913,7 +2913,7 @@
 
 			<object type="button">
 				<highlight color="%highlight_color%" />
-				<placement x="%back_button_x%" y="%row1_text_y%" />
+				<placement x="%back_button_x%" y="%row6_text_y%" />
 				<font resource="font" color="%button_text_color%" />
 				<text></text>
 				<image resource="plus_button" />
@@ -2922,33 +2922,8 @@
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="%col3_medium_x%" y="%row1_text_y%" placement="4" />
+				<placement x="%col3_medium_x%" y="%row6_text_y%" placement="4" />
 				<text>OS2SD Data Size: %tw_os2sddata_size%</text>
-			</object>
-
-			<object type="text" color="%text_color%">
-				<font resource="font" />
-				<placement x="%col1_x%" y="%sdfilesystem_text_y%" />
-				<text>File system: %tw_sdpart_file_system%</text>
-			</object>
-
-			<object type="button">
-				<highlight color="%highlight_color%" />
-				<placement x="%col1_x%" y="%sdfilesystem_button_y%" />
-				<font resource="font" color="%button_text_color%" />
-				<text>EXT3</text>
-				<image resource="main_button" />
-				<action function="set">tw_sdpart_file_system=ext3</action>
-			</object>
-
-			<object type="button">
-				<highlight color="%highlight_color%" />
-				<condition var1="tw_sdext_disable_ext4" var2="0" />
-				<placement x="%col2_x%" y="%sdfilesystem_button_y%" />
-				<font resource="font" color="%button_text_color%" />
-				<text>EXT4</text>
-				<image resource="main_button" />
-				<action function="set">tw_sdpart_file_system=ext4</action>
 			</object>
 
 			<object type="text" color="%text_color%">
