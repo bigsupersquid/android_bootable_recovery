@@ -1867,7 +1867,7 @@ int TWPartitionManager::Partition_SDCard(void) {
 	DataManager::GetValue("tw_os2sddata_size", data);
 	DataManager::GetValue("tw_sdpart_file_system", ext_format);
 	fat_size = total_size - ext - system -data;
-	DataManager::PutValue("tw_fat_size", fat_size);
+	DataManager::SetValue(TW_FAT_SIZE, fat_size);
 	LOGINFO("sd card block device is '%s', sdcard size is: %iMB, fat size: %iMB, ext size: %iMB, os2sd system size: %iMB, os2sd data size %iMB, ext system: '%s'\n", Device.c_str(), total_size, fat_size, ext, system, data, ext_format.c_str());
 	memset(temp, 0, sizeof(temp));
 	sprintf(temp, "%i", fat_size);
