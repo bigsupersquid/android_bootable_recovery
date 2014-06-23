@@ -906,6 +906,7 @@ void DataManager::SetDefaultValues()
 	mValues.insert(make_pair(TW_SKIP_MD5_GENERATE_VAR, make_pair("0", 1)));
 	mValues.insert(make_pair(TW_SDEXT_SIZE, make_pair("512", 1)));
 	mValues.insert(make_pair(TW_SWAP_SIZE, make_pair("512", 1)));
+	mValues.insert(make_pair(TW_EXT_SWAP_SIZE, make_pair("512", 1)));
 	mValues.insert(make_pair(TW_SDPART_FILE_SYSTEM, make_pair("ext4", 1)));
 	mValues.insert(make_pair(TW_OS2SDDATA_SIZE, make_pair("1024", 1)));
 	mValues.insert(make_pair(TW_OS2SDSYSTEM_SIZE, make_pair("768", 1)));
@@ -939,13 +940,13 @@ void DataManager::SetDefaultValues()
 	mValues.insert(make_pair("tw_background_thread_running", make_pair("0", 0)));
 	mValues.insert(make_pair(TW_RESTORE_FILE_DATE, make_pair("0", 0)));
 	mValues.insert(make_pair("tw_military_time", make_pair("0", 1)));
-#ifdef TW_NO_SCREEN_TIMEOUT
+//#ifdef TW_NO_SCREEN_TIMEOUT
 	mValues.insert(make_pair("tw_screen_timeout_secs", make_pair("0", 1)));
 	mValues.insert(make_pair("tw_no_screen_timeout", make_pair("1", 1)));
-#else
-	mValues.insert(make_pair("tw_screen_timeout_secs", make_pair("60", 1)));
-	mValues.insert(make_pair("tw_no_screen_timeout", make_pair("0", 1)));
-#endif
+//#else
+//	mValues.insert(make_pair("tw_screen_timeout_secs", make_pair("60", 1)));
+//	mValues.insert(make_pair("tw_no_screen_timeout", make_pair("0", 1)));
+//#endif
 	mValues.insert(make_pair("tw_gui_done", make_pair("0", 0)));
 	mValues.insert(make_pair("tw_encrypt_backup", make_pair("0", 0)));
 #ifdef TW_BRIGHTNESS_PATH
