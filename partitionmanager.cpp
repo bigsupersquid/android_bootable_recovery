@@ -1881,7 +1881,7 @@ int TWPartitionManager::Partition_SDCard(void) {
 	memset(temp, 0, sizeof(temp));
 	sprintf(temp, "%i", fat_size + swap + system + data);
 	data_str = temp;
-	if (ext + system + data > total_size) {
+	if (swap + system + data > total_size) {
 		LOGERR("Swap + OS2SD size is larger than sdcard size.\n");
 		return false;
 	}
@@ -1903,7 +1903,7 @@ int TWPartitionManager::Partition_SDCard(void) {
 	if (swap > 0) {
 
 		gui_print("Creating swap partition...\n");
-		Command = "parted " + Device + " mkpartfs primary linux-swap " + fat_str + "MB " + swap_str + "MB";	if (ext > 0) {
+		Command = "parted " + Device + " mkpartfs primary linux-swap " + fat_str + "MB " + swap_str + "MB";
 		LOGINFO("Command is: '%s'\n", Command.c_str());
 		if (TWFunc::Exec_Cmd(Command) != 0) {
 			LOGERR("Unable to create swap partition.\n");
