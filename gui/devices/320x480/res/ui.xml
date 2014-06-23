@@ -3216,7 +3216,7 @@
 				<font resource="font" color="%button_text_color%" />
 				<text></text>
 				<image resource="minus_button" />
-				<action function="addsubtract">tw_sdext_size-128</action>
+				<action function="addsubtract">tw_swap_size-32</action>
 			</object>
 
 			<object type="button">
@@ -3225,13 +3225,13 @@
 				<font resource="font" color="%button_text_color%" />
 				<text></text>
 				<image resource="plus_button" />
-				<action function="addsubtract">tw_sdext_size+128</action>
+				<action function="addsubtract">tw_swap_size+32</action>
 			</object>
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
 				<placement x="%col3_medium_x%" y="%row2_text_y%" placement="4" />
-				<text>EXT Size: %tw_sdext_size%</text>
+				<text>Swap Size: %tw_swap_size%</text>
 			</object>
 
 			<object type="button">

@@ -1807,8 +1807,8 @@ void TWPartitionManager::UnMount_Main_Partitions(void) {
 
 int TWPartitionManager::Partition_SDCard(void) {
 	char mkdir_path[255], temp[255], line[512];
-	string Command, Device, fat_str, ext_str, system_str, data_str, start_loc, end_loc, ext_format, sd_path, tmpdevice;
-	int ext, system, data, total_size = 0, fat_size;
+	string Command, Device, fat_str, swap_str, system_str, data_str, start_loc, end_loc, ext_format, sd_path, tmpdevice;
+	int swap, system, data, total_size = 0, fat_size;
 	FILE* fp;
 
 	gui_print("Partitioning SD Card...\n");
