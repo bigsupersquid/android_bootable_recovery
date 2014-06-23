@@ -94,6 +94,7 @@
 		<variable name="text_success_color" value="#33B5E5" />
 		<variable name="text_fail_color" value="#FF0101" />
 		<variable name="highlight_color" value="#90909080" />
+		<variable name="caps_highlight_color" value="#33B5E580" />
 		<variable name="home_button_x" value="3" />
 		<variable name="home_button_y" value="220" />
 		<variable name="back_button_x" value="209" />
@@ -254,7 +255,7 @@
 		<template name="progress_bar">
 			<object type="progressbar">
 				<placement x="%col_progressbar_x%" y="%row_progressbar_y%" />
-				<resource  empty="progress_empty" full="progress_full" />
+				<resource empty="progress_empty" full="progress_full" />
 				<data name="ui_progress" />
 			</object>
 
@@ -350,6 +351,7 @@
 				<placement x="0" y="90" />
 				<layout resource1="keyboard1" resource2="keyboard2" resource3="keyboard3" resource4="keyboard4" />
 				<highlight color="%highlight_color%" />
+				<capshighlight color="%caps_highlight_color%" />
 				<layout1>
 					<keysize height="32" width="24" />
 					<row1 key01="q" long01="1" key02="w" long02="2" key03="e" long03="3" key04="r" long04="4" key05="t" long05="5" key06="y" long06="6" key07="u" long07="7" key08="i" long08="8" key09="o" long09="9" key10="p" long10="0" />
@@ -358,7 +360,7 @@
 					<row4 key01="36:layout3" key02="24:" key03="120: " key04="24:." key05="36:a:action" />
 				</layout1>
 				<layout2>
-					<keysize height="32" width="24" />
+					<keysize height="32" width="24" capslock="0" revert_layout="1" />
 					<row1 key01="Q" long01="1" key02="W" long02="2" key03="E" long03="3" key04="R" long04="4" key05="T" long05="5" key06="Y" long06="6" key07="U" long07="7" key08="I" long08="8" key09="O" long09="9" key10="P" long10="0" />
 					<row2 key01="36:A" key02="S" key03="D" key04="F" key05="G" key06="H" key07="J" key08="K" key09="36:L" />
 					<row3 key01="36:layout1" key02="Z" key03="X" key04="C" key05="V" key06="B" key07="N" key08="M" key09="36:c:8" />
@@ -1084,7 +1086,10 @@
 			</object>
 
 			<object type="text" color="%text_color%">
-				<condition var1="tw_has_data_media" var2="0" />
+				<conditions>
+					<condition var1="tw_has_android_secure" var2="1" />
+					<condition var1="fileexists" var2="/and-sec" />
+				</conditions>
 				<font resource="font" />
 				<placement x="%center_x%" y="%row3_text_y%" placement="5" />
 				<text>.android_secure</text>
@@ -1372,7 +1377,10 @@
 				<placement x="%button_refresh_x%" y="%row9_text_y%" w="%button_fill_med_width%" h="%button_fill_quarter_height%" />
 				<font resource="font" color="%button_text_color%" />
 				<text>Refresh</text>
-				<action function="refreshsizes"></action>
+				<actions>
+					<action function="refreshsizes"></action>
+					<action function="page">backup</action>
+				</actions>
 			</object>
 
 			<object type="button">
@@ -1479,7 +1487,7 @@
 				<text>Append Date</text>
 				<action function="appenddatetobackupname"></action>
 			</object>
-			
+
 			<object type="button">
 				<highlight color="%highlight_color%" />
 				<fill color="%button_fill_color%" />
@@ -2132,9 +2140,9 @@
 			<object type="button">
 				<highlight color="%highlight_color%" />
 				<condition var1="tw_has_usb_storage" var2="1" />
-				<placement x="%col1_x%" y="row4_y" />
+				<placement x="%col_center_x%" y="%row5_y%" />
 				<font resource="font" color="%button_text_color%" />
-				<text>Mount USB Storage</text>
+				<text>Mount USB</text>
 				<image resource="main_button" />
 				<action function="page">usb_mount</action>
 			</object>
@@ -2497,7 +2505,7 @@
 				<placement x="%center_x%" y="%row_offset_text_y%" placement="5" />
 				<text>Offset (usually 0): %tw_time_zone_guioffset%</text>
 			</object>
-			
+
 			<object type="button">
 				<highlight color="%highlight_color%" />
 				<fill color="%button_fill_color%" />
@@ -2506,7 +2514,7 @@
 				<text>None</text>
 				<action function="set">tw_time_zone_guioffset=0</action>
 			</object>
-			
+
 			<object type="button">
 				<highlight color="%highlight_color%" />
 				<fill color="%button_fill_color%" />
@@ -2515,7 +2523,7 @@
 				<text>15</text>
 				<action function="set">tw_time_zone_guioffset=15</action>
 			</object>
-			
+
 			<object type="button">
 				<highlight color="%highlight_color%" />
 				<fill color="%button_fill_color%" />
@@ -2524,7 +2532,7 @@
 				<text>30</text>
 				<action function="set">tw_time_zone_guioffset=30</action>
 			</object>
-			
+
 			<object type="button">
 				<highlight color="%highlight_color%" />
 				<fill color="%button_fill_color%" />
@@ -2533,7 +2541,7 @@
 				<text>45</text>
 				<action function="set">tw_time_zone_guioffset=45</action>
 			</object>
-			
+
 			<object type="button">
 				<highlight color="%highlight_color%" />
 				<placement x="%col_center_x%" y="%tz_set_y%" />
@@ -2598,7 +2606,7 @@
 
 			<object type="slidervalue">
 				<condition var1="tw_has_brightnesss_file" var2="1" />
-				<placement x="col1_x" y="%row12_text_y%" w="%slidervalue_w%" />
+				<placement x="col1_x" y="%row8_text_y%" w="%slidervalue_w%" />
 				<font resource="font" color="%text_color%" />
 				<colors line="%slidervalue_line_clr%" slider="%slidervalue_slider_clr%" />
 				<dimensions lineh="%slidervalue_lineh%" linepadding="%slidervalue_padding%" sliderw="%slidervalue_sliderw%" sliderh="%slidervalue_sliderh%" />
@@ -3444,7 +3452,7 @@
 				<resource base="slider" used="slider-used" touch="slider-touch" />
 				<action function="page">filemanageracction</action>
 			</object>
-			
+
 			<object type="text" color="%text_color%">
 				<font resource="font" />
 				<placement x="%center_x%" y="%slider_text_y%" placement="4" />
@@ -3460,7 +3468,7 @@
 				<touch key="home" />
 				<action function="page">main</action>
 			</object>
-				
+
 			<object type="template" name="footer" />
 		</page>
 

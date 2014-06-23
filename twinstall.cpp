@@ -48,6 +48,53 @@
 #include "twrp-functions.hpp"
 extern "C" {
 	#include "gui/gui.h"
+	#include "legacy_property_service.h"
+}
+
+static const char* properties_path = "/dev/__properties__";
+static const char* properties_path_renamed = "/dev/__properties_kk__";
+static bool legacy_props_env_initd = false;
+static bool legacy_props_path_modified = false;
+
+static int switch_to_legacy_properties()
+{
+	if (!legacy_props_env_initd) {
+		if (legacy_properties_init() != 0)
+			return -1;
+
+		char tmp[32];
+		int propfd, propsz;
+		legacy_get_property_workspace(&propfd, &propsz);
+		sprintf(tmp, "%d,%d", dup(propfd), propsz);
+		setenv("ANDROID_PROPERTY_WORKSPACE", tmp, 1);
+		legacy_props_env_initd = true;
+	}
+
+	if (TWFunc::Path_Exists(properties_path)) {
+		// hide real properties so that the updater uses the envvar to find the legacy format properties
+		if (rename(properties_path, properties_path_renamed) != 0) {
+			LOGERR("Renaming %s failed: %s\n", properties_path, strerror(errno));
+			return -1;
+		} else {
+			legacy_props_path_modified = true;
+		}
+	}
+
+	return 0;
+}
+
+static int switch_to_new_properties()
+{
+	if (TWFunc::Path_Exists(properties_path_renamed)) {
+		if (rename(properties_path_renamed, properties_path) != 0) {
+			LOGERR("Renaming %s failed: %s\n", properties_path_renamed, strerror(errno));
+			return -1;
+		} else {
+			legacy_props_path_modified = false;
+		}
+	}
+
+	return 0;
 }
 
 static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache) {
@@ -115,6 +162,15 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 	}
 	mzCloseZipArchive(Zip);
 
+#ifndef TW_NO_LEGACY_PROPS
+	/* Set legacy properties */
+	if (switch_to_legacy_properties() != 0) {
+		LOGERR("Legacy property environment did not initialize successfully. Properties may not be detected.\n");
+	} else {
+		LOGINFO("Legacy property environment initialized.\n");
+	}
+#endif
+
 	pipe(pipe_fd);
 
 	args[0] = Temp_Binary.c_str();
@@ -128,7 +184,7 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 	pid_t pid = fork();
 	if (pid == 0) {
 		close(pipe_fd[0]);
-		execv(Temp_Binary.c_str(), (char* const*)args);
+		execve(Temp_Binary.c_str(), (char* const*)args, environ);
 		printf("E:Can't execute '%s'\n", Temp_Binary.c_str());
 		_exit(-1);
 	}
@@ -175,6 +231,18 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 	fclose(child_data);
 
 	waitpid(pid, &status, 0);
+
+#ifndef TW_NO_LEGACY_PROPS
+	/* Unset legacy properties */
+	if (legacy_props_path_modified) {
+		if (switch_to_new_properties() != 0) {
+			LOGERR("Legacy property environment did not disable successfully. Legacy properties may still be in use.\n");
+		} else {
+			LOGINFO("Legacy property environment disabled.\n");
+		}
+	}
+#endif
+
 	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
 		LOGERR("Error executing updater binary in zip '%s'\n", path);
 		return INSTALL_ERROR;
@@ -184,7 +252,7 @@ static int Run_Update_Binary(const char *path, ZipArchive *Zip, int* wipe_cache)
 }
 
 extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
-	int ret_val, zip_verify, md5_return, key_count;
+	int ret_val, zip_verify = 1, md5_return, key_count;
 	twrpDigest md5sum;
 	string strpath = path;
 	ZipArchive Zip;
@@ -192,16 +260,14 @@ extern "C" int TWinstall_zip(const char* path, int* wipe_cache) {
 	gui_print("Installing '%s'...\nChecking for MD5 file...\n", path);
 	md5sum.setfn(strpath);
 	md5_return = md5sum.verify_md5digest();
-	if (md5_return == -2) {
-		// MD5 did not match.
-		LOGERR("Zip MD5 does not match.\nUnable to install zip.\n");
+	if (md5_return == -2) { // md5 did not match
+		LOGERR("Aborting zip install\n");
 		return INSTALL_CORRUPT;
-	} else if (md5_return == -1) {
-		gui_print("Skipping MD5 check: no MD5 file found.\n");
-	} else if (md5_return == 0)
-		gui_print("Zip MD5 matched.\n"); // MD5 found and matched.
+	}
 
+#ifndef TW_OEM_BUILD
 	DataManager::GetValue(TW_SIGNED_ZIP_VERIFY_VAR, zip_verify);
+#endif
 	DataManager::SetProgress(0);
 	if (zip_verify) {
 		gui_print("Verifying zip signature...\n");

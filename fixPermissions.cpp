@@ -117,6 +117,10 @@ int fixPermissions::fixDataInternalContexts(void) {
 		dir = "/data/media/0";
 	else
 		dir = "/data/media";
+	if (!TWFunc::Path_Exists(dir)) {
+		LOGINFO("fixDataInternalContexts: '%s' does not exist!\n", dir.c_str());
+		return 0;
+	}
 	LOGINFO("Fixing %s contexts\n", dir.c_str());
 	restorecon(dir, &sb);
 	d = opendir(dir.c_str());
@@ -319,7 +323,7 @@ int fixPermissions::pchmod(string fn, string mode) {
 			if (mode[n] == '1')
 				mask |= S_IXOTH;
 		}
-	} 
+	}
 
 	if (chmod(fn.c_str(), mask) != 0) {
 		LOGERR("Unable to chmod '%s' %l\n", fn.c_str(), mask);
@@ -333,7 +337,7 @@ int fixPermissions::fixSystemApps() {
 	temp = head;
 	while (temp != NULL) {
 		if (TWFunc::Path_Exists(temp->codePath)) {
-			if (temp->appDir.compare("/system/app") == 0) {
+			if (temp->appDir.compare("/system/app") == 0 || temp->appDir.compare("/system/priv-app") == 0) {
 				if (debug)	{
 					LOGINFO("Looking at '%s'\n", temp->codePath.c_str());
 					LOGINFO("Fixing permissions on '%s'\n", temp->pkgName.c_str());
@@ -615,7 +619,7 @@ int fixPermissions::getPackages() {
 		name.clear();
 		next = next->next_sibling("package");
 	}
-	//Get updated packages	
+	//Get updated packages
 	next = pkgNode->first_node("updated-package");
 	if (next != NULL) {
 		while (next->first_attribute("name") != NULL) {

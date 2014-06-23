@@ -73,8 +73,6 @@ GUIAction::GUIAction(xml_node<>* node)
 	xml_node<>* actions;
 	xml_attribute<>* attr;
 
-	mKey = 0;
-
 	if (!node)  return;
 
 	// First, get the action
@@ -90,7 +88,7 @@ GUIAction::GUIAction(xml_node<>* node)
 
 		attr = child->first_attribute("function");
 		if (!attr)  return;
-	
+
 		action.mFunction = attr->value();
 		action.mArg = child->value();
 		mActions.push_back(action);
@@ -105,9 +103,12 @@ GUIAction::GUIAction(xml_node<>* node)
 		attr = child->first_attribute("key");
 		if (attr)
 		{
-			std::string key = attr->value();
-	
-			mKey = getKeyByName(key);
+			std::vector<std::string> keys = TWFunc::Split_String(attr->value(), "+");
+			for(size_t i = 0; i < keys.size(); ++i)
+			{
+				const int key = getKeyByName(keys[i]);
+				mKeys[key] = false;
+			}
 		}
 		else
 		{
@@ -135,12 +136,41 @@ int GUIAction::NotifyTouch(TOUCH_STATE state, int x, int y)
 	return 0;
 }
 
-int GUIAction::NotifyKey(int key)
+int GUIAction::NotifyKey(int key, bool down)
 {
-	if (!mKey || key != mKey)
-		return 1;
+	if (mKeys.empty())
+		return 0;
 
-	doActions();
+	std::map<int, bool>::iterator itr = mKeys.find(key);
+	if(itr == mKeys.end())
+		return 0;
+
+	bool prevState = itr->second;
+	itr->second = down;
+
+	// If there is only one key for this action, wait for key up so it
+	// doesn't trigger with multi-key actions.
+	// Else, check if all buttons are pressed, then consume their release events
+	// so they don't trigger one-button actions and reset mKeys pressed status
+	if(mKeys.size() == 1) {
+		if(!down && prevState)
+			doActions();
+	} else if(down) {
+		for(itr = mKeys.begin(); itr != mKeys.end(); ++itr) {
+			if(!itr->second)
+				return 0;
+		}
+
+		// Passed, all req buttons are pressed, reset them and consume release events
+		HardwareKeyboard *kb = PageManager::GetHardwareKeyboard();
+		for(itr = mKeys.begin(); itr != mKeys.end(); ++itr) {
+			kb->ConsumeKeyRelease(itr->first);
+			itr->second = false;
+		}
+
+		doActions();
+	}
+
 	return 0;
 }
 
@@ -148,7 +178,7 @@ int GUIAction::NotifyVarChange(const std::string& varName, const std::string& va
 {
 	GUIObject::NotifyVarChange(varName, value);
 
-	if (varName.empty() && !isConditionValid() && !mKey && !mActionW)
+	if (varName.empty() && !isConditionValid() && mKeys.empty() && !mActionW)
 		doActions();
 	else if((varName.empty() || IsConditionVariable(varName)) && isConditionValid() && isConditionTrue())
 		doActions();
@@ -380,7 +410,9 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 
 	if (function == "key")
 	{
-		PageManager::NotifyKey(getKeyByName(arg));
+		const int key = getKeyByName(arg);
+		PageManager::NotifyKey(key, true);
+		PageManager::NotifyKey(key, false);
 		return 0;
 	}
 
@@ -470,7 +502,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			gui_print("Simulating actions...\n");
 		return 0;
 	}
-	
+
 	if (function == "restoredefaultsettings")
 	{
 		operation_start("Restore Defaults");
@@ -484,7 +516,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		operation_end(0, simulate);
 		return 0;
 	}
-	
+
 	if (function == "copylog")
 	{
 		operation_start("Copy Log");
@@ -501,7 +533,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		operation_end(0, simulate);
 		return 0;
 	}
-	
+
 	if (function == "compute" || function == "addsubtract")
 	{
 		if (arg.find("+") != string::npos)
@@ -557,27 +589,27 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		LOGERR("Unable to perform compute '%s'\n", arg.c_str());
 		return -1;
 	}
-	
+
 	if (function == "setguitimezone")
 	{
 		string SelectedZone;
 		DataManager::GetValue(TW_TIME_ZONE_GUISEL, SelectedZone); // read the selected time zone into SelectedZone
 		string Zone = SelectedZone.substr(0, SelectedZone.find(';')); // parse to get time zone
 		string DSTZone = SelectedZone.substr(SelectedZone.find(';') + 1, string::npos); // parse to get DST component
-		
+
 		int dst;
 		DataManager::GetValue(TW_TIME_ZONE_GUIDST, dst); // check wether user chose to use DST
-		
+
 		string offset;
 		DataManager::GetValue(TW_TIME_ZONE_GUIOFFSET, offset); // pull in offset
-		
+
 		string NewTimeZone = Zone;
 		if (offset != "0")
 			NewTimeZone += ":" + offset;
-		
+
 		if (dst != 0)
 			NewTimeZone += DSTZone;
-		
+
 		DataManager::SetValue(TW_TIME_ZONE_VAR, NewTimeZone);
 		DataManager::update_tz_environment_variables();
 		return 0;
@@ -587,7 +619,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		LOGERR("togglestorage action was deprecated from TWRP\n");
 		return 0;
 	}
-	
+
 	if (function == "overlay")
 		return gui_changeOverlay(arg);
 
@@ -650,6 +682,96 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 		operation_start("GenerateBackupName");
 		TWFunc::Auto_Generate_Backup_Name();
 		operation_end(0, simulate);
+		return 0;
+	}
+	if (function == "checkpartitionlist") {
+		string Wipe_List, wipe_path;
+		int count = 0;
+
+		DataManager::GetValue("tw_wipe_list", Wipe_List);
+		LOGINFO("checkpartitionlist list '%s'\n", Wipe_List.c_str());
+		if (!Wipe_List.empty()) {
+			size_t start_pos = 0, end_pos = Wipe_List.find(";", start_pos);
+			while (end_pos != string::npos && start_pos < Wipe_List.size()) {
+				wipe_path = Wipe_List.substr(start_pos, end_pos - start_pos);
+				LOGINFO("checkpartitionlist wipe_path '%s'\n", wipe_path.c_str());
+				if (wipe_path == "/and-sec" || wipe_path == "DALVIK" || wipe_path == "INTERNAL") {
+					// Do nothing
+				} else {
+					count++;
+				}
+				start_pos = end_pos + 1;
+				end_pos = Wipe_List.find(";", start_pos);
+			}
+			DataManager::SetValue("tw_check_partition_list", count);
+		} else {
+			DataManager::SetValue("tw_check_partition_list", 0);
+		}
+		return 0;
+	}
+	if (function == "getpartitiondetails") {
+		string Wipe_List, wipe_path;
+		int count = 0;
+
+		DataManager::GetValue("tw_wipe_list", Wipe_List);
+		LOGINFO("getpartitiondetails list '%s'\n", Wipe_List.c_str());
+		if (!Wipe_List.empty()) {
+			size_t start_pos = 0, end_pos = Wipe_List.find(";", start_pos);
+			while (end_pos != string::npos && start_pos < Wipe_List.size()) {
+				wipe_path = Wipe_List.substr(start_pos, end_pos - start_pos);
+				LOGINFO("getpartitiondetails wipe_path '%s'\n", wipe_path.c_str());
+				if (wipe_path == "/and-sec" || wipe_path == "DALVIK" || wipe_path == "INTERNAL") {
+					// Do nothing
+				} else {
+					DataManager::SetValue("tw_partition_path", wipe_path);
+					break;
+				}
+				start_pos = end_pos + 1;
+				end_pos = Wipe_List.find(";", start_pos);
+			}
+			if (!wipe_path.empty()) {
+				TWPartition* Part = PartitionManager.Find_Partition_By_Path(wipe_path);
+				if (Part) {
+					unsigned long long mb = 1048576;
+
+					DataManager::SetValue("tw_partition_name", Part->Display_Name);
+					DataManager::SetValue("tw_partition_mount_point", Part->Mount_Point);
+					DataManager::SetValue("tw_partition_file_system", Part->Current_File_System);
+					DataManager::SetValue("tw_partition_size", Part->Size / mb);
+					DataManager::SetValue("tw_partition_used", Part->Used / mb);
+					DataManager::SetValue("tw_partition_free", Part->Free / mb);
+					DataManager::SetValue("tw_partition_backup_size", Part->Backup_Size / mb);
+					DataManager::SetValue("tw_partition_removable", Part->Removable);
+					DataManager::SetValue("tw_partition_is_present", Part->Is_Present);
+
+					if (Part->Can_Repair())
+						DataManager::SetValue("tw_partition_can_repair", 1);
+					else
+						DataManager::SetValue("tw_partition_can_repair", 0);
+					if (TWFunc::Path_Exists("/sbin/mkdosfs"))
+						DataManager::SetValue("tw_partition_vfat", 1);
+					else
+						DataManager::SetValue("tw_partition_vfat", 0);
+					if (TWFunc::Path_Exists("/sbin/mkfs.exfat"))
+						DataManager::SetValue("tw_partition_exfat", 1);
+					else
+						DataManager::SetValue("tw_partition_exfat", 0);
+					if (TWFunc::Path_Exists("/sbin/mkfs.f2fs"))
+						DataManager::SetValue("tw_partition_f2fs", 1);
+					else
+						DataManager::SetValue("tw_partition_f2fs", 0);
+					if (TWFunc::Path_Exists("/sbin/mke2fs"))
+						DataManager::SetValue("tw_partition_ext", 1);
+					else
+						DataManager::SetValue("tw_partition_ext", 0);
+					return 0;
+				} else {
+					LOGERR("Unable to locate partition: '%s'\n", wipe_path.c_str());
+				}
+			}
+		}
+		DataManager::SetValue("tw_partition_name", "");
+		DataManager::SetValue("tw_partition_file_system", "");
 		return 0;
 	}
 
@@ -800,7 +922,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 					}
 				} else
 					ret_val = PartitionManager.Wipe_By_Path(arg);
-
+#ifdef TW_OEM_BUILD
 				if (arg == DataManager::GetSettingsStoragePath()) {
 					// If we wiped the settings storage path, recreate the TWRP folder and dump the settings
 					string Storage_Path = DataManager::GetSettingsStoragePath();
@@ -814,6 +936,7 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 						LOGERR("Unable to recreate TWRP folder and save settings.\n");
 					}
 				}
+#endif
 			}
 			PartitionManager.Update_System_Details();
 			if (ret_val)
@@ -1244,6 +1367,49 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 					op_status = 0; // success
 				else
 					op_status = 1; // fail
+			}
+
+			operation_end(op_status, simulate);
+			return 0;
+		}
+		if (function == "repair")
+		{
+			int op_status = 0;
+
+			operation_start("Repair Partition");
+			if (simulate) {
+				simulate_progress_bar();
+			} else {
+				string part_path;
+				DataManager::GetValue("tw_partition_mount_point", part_path);
+				if (PartitionManager.Repair_By_Path(part_path, true)) {
+					op_status = 0; // success
+				} else {
+					LOGERR("Error repairing file system.\n");
+					op_status = 1; // fail
+				}
+			}
+
+			operation_end(op_status, simulate);
+			return 0;
+		}
+		if (function == "changefilesystem")
+		{
+			int op_status = 0;
+
+			operation_start("Change File System");
+			if (simulate) {
+				simulate_progress_bar();
+			} else {
+				string part_path, file_system;
+				DataManager::GetValue("tw_partition_mount_point", part_path);
+				DataManager::GetValue("tw_action_new_file_system", file_system);
+				if (PartitionManager.Wipe_By_Path(part_path, file_system)) {
+					op_status = 0; // success
+				} else {
+					LOGERR("Error changing file system.\n");
+					op_status = 1; // fail
+				}
 			}
 
 			operation_end(op_status, simulate);

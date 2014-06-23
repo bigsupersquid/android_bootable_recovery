@@ -45,6 +45,7 @@
 #ifndef TW_NO_SCREEN_TIMEOUT
 #include "gui/blanktimer.hpp"
 #endif
+#include "find_file.hpp"
 
 #ifdef TW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID
 	#include "cutils/properties.h"
@@ -278,9 +279,12 @@ int DataManager::LoadValues(const string filename)
 error:
 	fclose(in);
 	string current = GetCurrentStoragePath();
-	string settings = GetSettingsStoragePath();
-	if (current != settings && !PartitionManager.Mount_By_Path(current, false)) {
-		SetValue("tw_storage_path", settings);
+	TWPartition* Part = PartitionManager.Find_Partition_By_Path(current);
+	if(!Part)
+		Part = PartitionManager.Get_Default_Storage_Partition();
+	if (Part && current != Part->Storage_Path && Part->Mount(false)) {
+		LOGINFO("LoadValues setting storage path to '%s'\n", Part->Storage_Path.c_str());
+		SetValue("tw_storage_path", Part->Storage_Path);
 	} else {
 		SetBackupFolder();
 	}
@@ -294,6 +298,7 @@ int DataManager::Flush()
 
 int DataManager::SaveValues()
 {
+#ifndef TW_OEM_BUILD
 	if (mBackingFile.empty())
 		return -1;
 
@@ -322,6 +327,7 @@ int DataManager::SaveValues()
 		}
 	}
 	fclose(out);
+#endif // ifdef TW_OEM_BUILD
 	return 0;
 }
 
@@ -582,10 +588,15 @@ void DataManager::SetDefaultValues()
 	mConstValues.insert(make_pair("false", "0"));
 
 	mConstValues.insert(make_pair(TW_VERSION_VAR, TW_VERSION_STR));
-	mValues.insert(make_pair("tw_storage_path", make_pair("/", 1)));
 	mValues.insert(make_pair("tw_button_vibrate", make_pair("80", 1)));
 	mValues.insert(make_pair("tw_keyboard_vibrate", make_pair("40", 1)));
 	mValues.insert(make_pair("tw_action_vibrate", make_pair("160", 1)));
+
+	TWPartition *store = PartitionManager.Get_Default_Storage_Partition();
+	if(store)
+		mValues.insert(make_pair("tw_storage_path", make_pair(store->Storage_Path.c_str(), 1)));
+	else
+		mValues.insert(make_pair("tw_storage_path", make_pair("/", 1)));
 
 #ifdef TW_FORCE_CPUINFO_FOR_DEVICE_ID
 	printf("TW_FORCE_CPUINFO_FOR_DEVICE_ID := true\n");
@@ -940,17 +951,32 @@ void DataManager::SetDefaultValues()
 #ifndef TW_MAX_BRIGHTNESS
 #define TW_MAX_BRIGHTNESS 255
 #endif
+	string findbright;
 	if (strcmp(EXPAND(TW_BRIGHTNESS_PATH), "/nobrightness") != 0) {
-		LOGINFO("TW_BRIGHTNESS_PATH := %s\n", EXPAND(TW_BRIGHTNESS_PATH));
+		findbright = EXPAND(TW_BRIGHTNESS_PATH);
+		LOGINFO("TW_BRIGHTNESS_PATH := %s\n", findbright.c_str());
+		if (!TWFunc::Path_Exists(findbright)) {
+			LOGINFO("Specified brightness file '%s' not found.\n", findbright.c_str());
+			findbright = "";
+		}
+	}
+	if (findbright.empty()) {
+		// Attempt to locate the brightness file
+		findbright = Find_File::Find("brightness", "/sys/class/backlight");
+		if (findbright.empty()) findbright = Find_File::Find("brightness", "/sys/class/leds/lcd-backlight");
+	}
+	if (findbright.empty()) {
+		LOGINFO("Unable to locate brightness file\n");
+		mConstValues.insert(make_pair("tw_has_brightnesss_file", "0"));
+	} else {
+		LOGINFO("Found brightness file at '%s'\n", findbright.c_str());
 		mConstValues.insert(make_pair("tw_has_brightnesss_file", "1"));
-		mConstValues.insert(make_pair("tw_brightness_file", EXPAND(TW_BRIGHTNESS_PATH)));
+		mConstValues.insert(make_pair("tw_brightness_file", findbright));
 		ostringstream maxVal;
 		maxVal << TW_MAX_BRIGHTNESS;
 		mConstValues.insert(make_pair("tw_brightness_max", maxVal.str()));
 		mValues.insert(make_pair("tw_brightness", make_pair(maxVal.str(), 1)));
 		mValues.insert(make_pair("tw_brightness_pct", make_pair("100", 1)));
-	} else {
-		mConstValues.insert(make_pair("tw_has_brightnesss_file", "0"));
 	}
 #endif
 	mValues.insert(make_pair(TW_MILITARY_TIME, make_pair("0", 1)));
@@ -975,7 +1001,7 @@ int DataManager::GetMagicValue(const string varName, string& value)
 		int tw_military_time;
 		now = time(0);
 		current = localtime(&now);
-		GetValue(TW_MILITARY_TIME, tw_military_time); 
+		GetValue(TW_MILITARY_TIME, tw_military_time);
 		if (current->tm_hour >= 12)
 		{
 			if (tw_military_time == 1)
@@ -985,7 +1011,7 @@ int DataManager::GetMagicValue(const string varName, string& value)
 		}
 		else
 		{
-			if (tw_military_time == 1) 
+			if (tw_military_time == 1)
 				sprintf(tmp, "%d:%02d", current->tm_hour, current->tm_min);
 			else
 				sprintf(tmp, "%d:%02d AM", current->tm_hour == 0 ? 12 : current->tm_hour, current->tm_min);
@@ -1080,6 +1106,7 @@ void DataManager::Output_Version(void)
 
 void DataManager::ReadSettingsFile(void)
 {
+#ifndef TW_OEM_BUILD
 	// Load up the values for TWRP - Sleep to let the card be ready
 	char mkdir_path[255], settings_file[255];
 	int is_enc, has_dual, use_ext, has_data_media, has_ext;
@@ -1108,27 +1135,8 @@ void DataManager::ReadSettingsFile(void)
 	LOGINFO("Attempt to load settings from settings file...\n");
 	LoadValues(settings_file);
 	Output_Version();
-	GetValue(TW_HAS_DUAL_STORAGE, has_dual);
-	GetValue(TW_USE_EXTERNAL_STORAGE, use_ext);
-	GetValue(TW_HAS_EXTERNAL, has_ext);
-	if (has_dual != 0 && use_ext == 1) {
-		// Attempt to switch to using external storage
-		if (!PartitionManager.Mount_Current_Storage(false)) {
-			LOGERR("Failed to mount external storage, using internal storage.\n");
-			// Remount failed, default back to internal storage
-			SetValue(TW_USE_EXTERNAL_STORAGE, 0);
-			PartitionManager.Mount_Current_Storage(true);
-		}
-	} else {
-		PartitionManager.Mount_Current_Storage(true);
-	}
-
-	if (has_ext) {
-		string ext_path;
-
-		GetValue(TW_EXTERNAL_PATH, ext_path);
-		PartitionManager.Mount_By_Path(ext_path, 0);
-	}
+#endif // ifdef TW_OEM_BUILD
+	PartitionManager.Mount_All_Storage();
 	update_tz_environment_variables();
 #ifdef TW_MAX_BRIGHTNESS
 	if (strcmp(EXPAND(TW_BRIGHTNESS_PATH), "/nobrightness") != 0) {

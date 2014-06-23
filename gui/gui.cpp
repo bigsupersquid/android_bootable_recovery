@@ -187,8 +187,8 @@ static void * input_thread(void *cookie)
 	static int x = 0, y = 0;
 	static int lshift = 0, rshift = 0;
 	static struct timeval touchStart;
-	HardwareKeyboard kb;
 	string seconds;
+	HardwareKeyboard *kb = PageManager::GetHardwareKeyboard();
 	MouseCursor *cursor = PageManager::GetMouseCursor();
 
 #ifndef TW_NO_SCREEN_TIMEOUT
@@ -249,7 +249,7 @@ static void * input_thread(void *cookie)
 #endif
 				gettimeofday(&touchStart, NULL);
 				key_repeat = 2;
-				kb.KeyRepeat();
+				kb->KeyRepeat();
 #ifndef TW_NO_SCREEN_TIMEOUT
 				blankTimer.resetTimerAndUnblank();
 #endif
@@ -261,7 +261,7 @@ static void * input_thread(void *cookie)
 				LOGERR("KEY_REPEAT: %d,%d\n", x, y);
 #endif
 				gettimeofday(&touchStart, NULL);
-				kb.KeyRepeat();
+				kb->KeyRepeat();
 #ifndef TW_NO_SCREEN_TIMEOUT
 				blankTimer.resetTimerAndUnblank();
 #endif
@@ -296,16 +296,18 @@ static void * input_thread(void *cookie)
 			{
 				if (!drag)
 				{
+					if (x != 0 && y != 0) {
 #ifdef _EVENT_LOGGING
-					LOGERR("TOUCH_START: %d,%d\n", x, y);
+						LOGERR("TOUCH_START: %d,%d\n", x, y);
 #endif
-					if (PageManager::NotifyTouch(TOUCH_START, x, y) > 0)
-						state = 1;
-					drag = 1;
-					touch_and_hold = 1;
-					dontwait = 1;
-					key_repeat = 0;
-					gettimeofday(&touchStart, NULL);
+						if (PageManager::NotifyTouch(TOUCH_START, x, y) > 0)
+							state = 1;
+						drag = 1;
+						touch_and_hold = 1;
+						dontwait = 1;
+						key_repeat = 0;
+						gettimeofday(&touchStart, NULL);
+					}
 #ifndef TW_NO_SCREEN_TIMEOUT
 					blankTimer.resetTimerAndUnblank();
 #endif
@@ -354,6 +356,9 @@ static void * input_thread(void *cookie)
 					{
 						cursor->GetPos(x, y);
 
+#ifdef _EVENT_LOGGING
+						LOGERR("TOUCH_RELEASE: %d,%d\n", x, y);
+#endif
 						PageManager::NotifyTouch(TOUCH_RELEASE, x, y);
 
 						touch_and_hold = 0;
@@ -369,15 +374,13 @@ static void * input_thread(void *cookie)
 			else if(ev.code == BTN_SIDE)
 			{
 				if(ev.value == 1)
-					kb.KeyDown(KEY_BACK);
+					kb->KeyDown(KEY_BACK);
 				else
-					kb.KeyUp(KEY_BACK);
-			}
-			else if (ev.value != 0)
-			{
+					kb->KeyUp(KEY_BACK);
+			} else if (ev.value != 0) {
 				// This is a key press
-				if (kb.KeyDown(ev.code))
-				{
+				if (kb->KeyDown(ev.code)) {
+					// Key repeat is enabled for this key
 					key_repeat = 1;
 					touch_and_hold = 0;
 					touch_repeat = 0;
@@ -386,9 +389,7 @@ static void * input_thread(void *cookie)
 #ifndef TW_NO_SCREEN_TIMEOUT
 					blankTimer.resetTimerAndUnblank();
 #endif
-				}
-				else
-				{
+				} else {
 					key_repeat = 0;
 					touch_and_hold = 0;
 					touch_repeat = 0;
@@ -397,11 +398,9 @@ static void * input_thread(void *cookie)
 					blankTimer.resetTimerAndUnblank();
 #endif
 				}
-			}
-			else
-			{
+			} else {
 				// This is a key release
-				kb.KeyUp(ev.code);
+				kb->KeyUp(ev.code);
 				key_repeat = 0;
 				touch_and_hold = 0;
 				touch_repeat = 0;
@@ -430,7 +429,7 @@ static void * input_thread(void *cookie)
 					state = 1;
 				key_repeat = 0;
 			}
-        }
+		}
 	}
 	return NULL;
 }
@@ -689,10 +688,7 @@ extern "C" int gui_init(void)
 
 extern "C" int gui_loadResources(void)
 {
-	//    unlink("/sdcard/video.last");
-	//    rename("/sdcard/video.bin", "/sdcard/video.last");
-	//    gRecorder = open("/sdcard/video.bin", O_CREAT | O_WRONLY);
-
+#ifndef TW_OEM_BUILD
 	int check = 0;
 	DataManager::GetValue(TW_IS_ENCRYPTED, check);
 	if (check)
@@ -731,14 +727,16 @@ extern "C" int gui_loadResources(void)
 		theme_path += "/TWRP/theme/ui.zip";
 		if (check || PageManager::LoadPackage("TWRP", theme_path, "main"))
 		{
+#endif // ifndef TW_OEM_BUILD
 			if (PageManager::LoadPackage("TWRP", "/res/ui.xml", "main"))
 			{
 				LOGERR("Failed to load base packages.\n");
 				goto error;
 			}
+#ifndef TW_OEM_BUILD
 		}
 	}
-
+#endif // ifndef TW_OEM_BUILD
 	// Set the default package
 	PageManager::SelectPackage("TWRP");
 
@@ -746,7 +744,7 @@ extern "C" int gui_loadResources(void)
 	return 0;
 
 error:
-	LOGERR("An internal error has occurred.\n");
+	LOGERR("An internal error has occurred: unable to load theme.\n");
 	gGuiInitialized = 0;
 	return -1;
 }

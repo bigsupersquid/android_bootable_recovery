@@ -63,6 +63,11 @@ extern "C" {
 #include "selinux/selinux.h"
 #include <selinux/label.h>
 #endif
+#ifdef HAVE_CAPABILITIES
+#include <sys/capability.h>
+#include <sys/xattr.h>
+#include <linux/xattr.h>
+#endif
 
 using namespace std;
 
@@ -354,7 +359,7 @@ bool TWPartition::Process_Fstab_Line(string Line, bool Display_Error) {
 			Can_Be_Backed_Up = true;
 			if (Mount(false) && !TWFunc::Path_Exists("/cache/recovery/.")) {
 				LOGINFO("Recreating /cache/recovery folder.\n");
-				if (mkdir("/cache/recovery", S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP) != 0) 
+				if (mkdir("/cache/recovery", S_IRWXU | S_IRWXG | S_IWGRP | S_IXGRP) != 0)
 					return -1;
 			}
 		} else if (Mount_Point == "/datadata") {
@@ -502,6 +507,8 @@ bool TWPartition::Process_Flags(string Flags, bool Display_Error) {
 			}
 		} else if (strcmp(ptr, "settingsstorage") == 0) {
 			Is_Storage = true;
+		} else if (strcmp(ptr, "andsec") == 0) {
+			Has_Android_Secure = true;
 		} else if (strcmp(ptr, "canbewiped") == 0) {
 			Can_Be_Wiped = true;
 		} else if (strcmp(ptr, "usermrf") == 0) {
@@ -996,7 +1003,7 @@ bool TWPartition::Mount(bool Display_Error) {
 			}
 		} else {
 #endif
-			if (Display_Error)
+			if (!Removable && Display_Error)
 				LOGERR("Unable to mount '%s'\n", Mount_Point.c_str());
 			else
 				LOGINFO("Unable to mount '%s'\n", Mount_Point.c_str());
@@ -1074,7 +1081,7 @@ bool TWPartition::UnMount(bool Display_Error) {
 }
 
 bool TWPartition::Wipe(string New_File_System) {
-	bool wiped = false, update_crypt = false;
+	bool wiped = false, update_crypt = false, recreate_media = true;
 	int check;
 	string Layout_Filename = Mount_Point + "/.layout_version";
 
@@ -1098,8 +1105,9 @@ bool TWPartition::Wipe(string New_File_System) {
 	else
 		unlink("/.layout_version");
 
-	if (Has_Data_Media) {
+	if (Has_Data_Media && Current_File_System == New_File_System) {
 		wiped = Wipe_Data_Without_Wiping_Media();
+		recreate_media = false;
 	} else {
 
 		DataManager::GetValue(TW_RM_RF_VAR, check);
@@ -1155,6 +1163,10 @@ bool TWPartition::Wipe(string New_File_System) {
 				}
 			}
 		}
+
+		if (Mount_Point == "/data" && Has_Data_Media && recreate_media) {
+			Recreate_Media_Folder();
+		}
 	}
 	return wiped;
 }
@@ -1176,6 +1188,100 @@ bool TWPartition::Wipe_AndSec(void) {
 	gui_print("Wiping %s\n", Backup_Display_Name.c_str());
 	TWFunc::removeDir(Mount_Point + "/.android_secure/", true);
 	return true;
+}
+
+bool TWPartition::Can_Repair() {
+	if (Current_File_System == "vfat" && TWFunc::Path_Exists("/sbin/dosfsck"))
+		return true;
+	else if ((Current_File_System == "ext2" || Current_File_System == "ext3" || Current_File_System == "ext4") && TWFunc::Path_Exists("/sbin/e2fsck"))
+		return true;
+	else if (Current_File_System == "exfat" && TWFunc::Path_Exists("/sbin/fsck.exfat"))
+		return true;
+	else if (Current_File_System == "f2fs" && TWFunc::Path_Exists("/sbin/fsck.f2fs"))
+		return true;
+	return false;
+}
+
+bool TWPartition::Repair() {
+	string command;
+
+	if (Current_File_System == "vfat") {
+		if (!TWFunc::Path_Exists("/sbin/dosfsck")) {
+			gui_print("dosfsck does not exist! Cannot repair!\n");
+			return false;
+		}
+		if (!UnMount(true))
+			return false;
+		gui_print("Repairing %s using dosfsck...\n", Display_Name.c_str());
+		Find_Actual_Block_Device();
+		command = "/sbin/dosfsck -y " + Actual_Block_Device;
+		LOGINFO("Repair command: %s\n", command.c_str());
+		if (TWFunc::Exec_Cmd(command) == 0) {
+			gui_print("Done.\n");
+			return true;
+		} else {
+			LOGERR("Unable to repair '%s'.\n", Mount_Point.c_str());
+			return false;
+		}
+	}
+	if (Current_File_System == "ext2" || Current_File_System == "ext3" || Current_File_System == "ext4") {
+		if (!TWFunc::Path_Exists("/sbin/e2fsck")) {
+			gui_print("e2fsck does not exist! Cannot repair!\n");
+			return false;
+		}
+		if (!UnMount(true))
+			return false;
+		gui_print("Repairing %s using e2fsck...\n", Display_Name.c_str());
+		Find_Actual_Block_Device();
+		command = "/sbin/e2fsck -p " + Actual_Block_Device;
+		LOGINFO("Repair command: %s\n", command.c_str());
+		if (TWFunc::Exec_Cmd(command) == 0) {
+			gui_print("Done.\n");
+			return true;
+		} else {
+			LOGERR("Unable to repair '%s'.\n", Mount_Point.c_str());
+			return false;
+		}
+	}
+	if (Current_File_System == "exfat") {
+		if (!TWFunc::Path_Exists("/sbin/fsck.exfat")) {
+			gui_print("fsck.exfat does not exist! Cannot repair!\n");
+			return false;
+		}
+		if (!UnMount(true))
+			return false;
+		gui_print("Repairing %s using fsck.exfat...\n", Display_Name.c_str());
+		Find_Actual_Block_Device();
+		command = "/sbin/fsck.exfat " + Actual_Block_Device;
+		LOGINFO("Repair command: %s\n", command.c_str());
+		if (TWFunc::Exec_Cmd(command) == 0) {
+			gui_print("Done.\n");
+			return true;
+		} else {
+			LOGERR("Unable to repair '%s'.\n", Mount_Point.c_str());
+			return false;
+		}
+	}
+	if (Current_File_System == "f2fs") {
+		if (!TWFunc::Path_Exists("/sbin/fsck.f2fs")) {
+			gui_print("fsck.f2fs does not exist! Cannot repair!\n");
+			return false;
+		}
+		if (!UnMount(true))
+			return false;
+		gui_print("Repairing %s using fsck.f2fs...\n", Display_Name.c_str());
+		Find_Actual_Block_Device();
+		command = "/sbin/fsck.f2fs " + Actual_Block_Device;
+		LOGINFO("Repair command: %s\n", command.c_str());
+		if (TWFunc::Exec_Cmd(command) == 0) {
+			gui_print("Done.\n");
+			return true;
+		} else {
+			LOGERR("Unable to repair '%s'.\n", Mount_Point.c_str());
+			return false;
+		}
+	}
+	return false;
 }
 
 bool TWPartition::Backup(string backup_folder) {
@@ -1307,7 +1413,9 @@ bool TWPartition::Wipe_Encryption() {
 		if (Has_Data_Media && !Symlink_Mount_Point.empty()) {
 			Recreate_Media_Folder();
 		}
+#ifndef TW_OEM_BUILD
 		gui_print("You may need to reboot recovery to be able to use /data again.\n");
+#endif
 		return true;
 	} else {
 		Has_Data_Media = Save_Data_Media;
@@ -1335,7 +1443,7 @@ void TWPartition::Check_FS_Type() {
 		return;
 	}
 
-	if (blkid_probe_lookup_value(pr, "TYPE", &type, NULL) < 0) { 
+	if (blkid_probe_lookup_value(pr, "TYPE", &type, NULL) < 0) {
 		blkid_free_probe(pr);
 		LOGINFO("can't find filesystem on device %s\n", Actual_Block_Device.c_str());
 		return;
@@ -1381,7 +1489,7 @@ bool TWPartition::Wipe_EXT4() {
 
 	gui_print("Formatting %s using make_ext4fs function.\n", Display_Name.c_str());
 
-	if (selabel_lookup(selinux_handle, &secontext, Mount_Point.c_str(), S_IFDIR) < 0) {
+	if (!selinux_handle || selabel_lookup(selinux_handle, &secontext, Mount_Point.c_str(), S_IFDIR) < 0) {
 		LOGINFO("Cannot lookup security context for '%s'\n", Mount_Point.c_str());
 		ret = make_ext4fs(Actual_Block_Device.c_str(), Length, Mount_Point.c_str(), NULL);
 	} else {
@@ -1551,6 +1659,10 @@ bool TWPartition::Wipe_F2FS() {
 }
 
 bool TWPartition::Wipe_Data_Without_Wiping_Media() {
+#ifdef TW_OEM_BUILD
+	// In an OEM Build we want to do a full format
+	return Wipe_Encryption();
+#else
 	string dir;
 	#ifdef HAVE_SELINUX
 	fixPermissions perms;
@@ -1594,6 +1706,7 @@ bool TWPartition::Wipe_Data_Without_Wiping_Media() {
 	}
 	gui_print("Dirent failed to open /data, error!\n");
 	return false;
+#endif // ifdef TW_OEM_BUILD
 }
 
 bool TWPartition::Backup_Tar(string backup_folder) {
@@ -1613,11 +1726,7 @@ bool TWPartition::Backup_Tar(string backup_folder) {
 
 	DataManager::GetValue(TW_USE_COMPRESSION_VAR, use_compression);
 	tar.use_compression = use_compression;
-	//exclude Google Music Cache
-	vector<string> excludedirs = du.get_absolute_dirs();
-	for (int i = 0; i < excludedirs.size(); ++i) {
-		tar.setexcl(excludedirs.at(i));
-	}
+
 #ifndef TW_EXCLUDE_ENCRYPTED_BACKUPS
 	DataManager::GetValue("tw_encrypt_backup", use_encryption);
 	if (use_encryption && Can_Encrypt_Backup) {
@@ -1699,14 +1808,22 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System)
 	string Full_FileName, Command;
 	int index = 0;
 	char split_index[5];
+	bool ret = false;
 
 	if (Has_Android_Secure) {
 		if (!Wipe_AndSec())
 			return false;
 	} else {
 		gui_print("Wiping %s...\n", Display_Name.c_str());
-		if (!Wipe(Restore_File_System))
-			return false;
+		if (Has_Data_Media && Mount_Point == "/data" && Restore_File_System != Current_File_System) {
+			gui_print("WARNING: This /data backup was made with %s file system!\n", Restore_File_System.c_str());
+			gui_print("The backup may not boot unless you change back to %s.\n", Restore_File_System.c_str());
+			if (!Wipe_Data_Without_Wiping_Media())
+				return false;
+		} else {
+			if (!Wipe(Restore_File_System))
+				return false;
+		}
 	}
 	TWFunc::GUI_Operation_Text(TW_RESTORE_TEXT, Backup_Display_Name, "Restoring");
 	gui_print("Restoring %s...\n", Backup_Display_Name.c_str());
@@ -1726,8 +1843,29 @@ bool TWPartition::Restore_Tar(string restore_folder, string Restore_File_System)
 		tar.setpassword(Password);
 #endif
 	if (tar.extractTarFork() != 0)
-		return false;
-	return true;
+		ret = false;
+	else
+		ret = true;
+#ifdef HAVE_CAPABILITIES
+	// Restore capabilities to the run-as binary
+	if (Mount_Point == "/system" && Mount(true) && TWFunc::Path_Exists("/system/bin/run-as")) {
+		struct vfs_cap_data cap_data;
+		uint64_t capabilities = (1 << CAP_SETUID) | (1 << CAP_SETGID);
+
+		memset(&cap_data, 0, sizeof(cap_data));
+		cap_data.magic_etc = VFS_CAP_REVISION | VFS_CAP_FLAGS_EFFECTIVE;
+		cap_data.data[0].permitted = (uint32_t) (capabilities & 0xffffffff);
+		cap_data.data[0].inheritable = 0;
+		cap_data.data[1].permitted = (uint32_t) (capabilities >> 32);
+		cap_data.data[1].inheritable = 0;
+		if (setxattr("/system/bin/run-as", XATTR_NAME_CAPS, &cap_data, sizeof(cap_data), 0) < 0) {
+			LOGINFO("Failed to reset capabilities of /system/bin/run-as binary.\n");
+		} else {
+			LOGINFO("Reset capabilities of /system/bin/run-as binary successful.\n");
+		}
+	}
+#endif
+	return ret;
 }
 
 bool TWPartition::Restore_DD(string restore_folder) {
@@ -1795,9 +1933,7 @@ bool TWPartition::Update_Size(bool Display_Error) {
 	if (Has_Data_Media) {
 		if (Mount(Display_Error)) {
 			unsigned long long data_media_used, actual_data;
-			du.add_relative_dir("media");
 			Used = du.Get_Folder_Size("/data");
-			du.clear_relative_dir("media");
 			Backup_Size = Used;
 			int bak = (int)(Used / 1048576LLU);
 			int fre = (int)(Free / 1048576LLU);
@@ -1852,11 +1988,13 @@ void TWPartition::Recreate_Media_Folder(void) {
 	} else if (!TWFunc::Path_Exists("/data/media")) {
 		PartitionManager.Mount_By_Path(Symlink_Mount_Point, true);
 		LOGINFO("Recreating /data/media folder.\n");
-		mkdir("/data/media", S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH); 
+		mkdir("/data/media", S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 		#ifdef HAVE_SELINUX
 		perms.fixDataInternalContexts();
 		#endif
+		// Toggle mount to ensure that "internal sdcard" gets mounted
 		PartitionManager.UnMount_By_Path(Symlink_Mount_Point, true);
+		PartitionManager.Mount_By_Path(Symlink_Mount_Point, true);
 	}
 }
 
@@ -1869,7 +2007,7 @@ void TWPartition::Recreate_AndSec_Folder(void) {
 	} else if (!TWFunc::Path_Exists(Symlink_Path)) {
 		LOGINFO("Recreating %s folder.\n", Backup_Name.c_str());
 		PartitionManager.Mount_By_Path(Symlink_Mount_Point, true);
-		mkdir(Symlink_Path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH); 
+		mkdir(Symlink_Path.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 		PartitionManager.UnMount_By_Path(Symlink_Mount_Point, true);
 	}
 }

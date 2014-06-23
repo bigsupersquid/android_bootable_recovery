@@ -51,14 +51,6 @@ endif
 ifneq ($(TW_EXTERNAL_STORAGE_PATH),)
 	LOCAL_CFLAGS += -DTW_EXTERNAL_STORAGE_PATH=$(TW_EXTERNAL_STORAGE_PATH)
 endif
-ifneq ($(TW_BRIGHTNESS_PATH),)
-	LOCAL_CFLAGS += -DTW_BRIGHTNESS_PATH=$(TW_BRIGHTNESS_PATH)
-endif
-ifneq ($(TW_MAX_BRIGHTNESS),)
-	LOCAL_CFLAGS += -DTW_MAX_BRIGHTNESS=$(TW_MAX_BRIGHTNESS)
-else
-	LOCAL_CFLAGS += -DTW_MAX_BRIGHTNESS=255
-endif
 ifneq ($(TW_NO_SCREEN_BLANK),)
 	LOCAL_CFLAGS += -DTW_NO_SCREEN_BLANK
 endif
@@ -67,6 +59,9 @@ ifneq ($(TW_NO_SCREEN_TIMEOUT),)
 endif
 ifeq ($(HAVE_SELINUX), true)
 LOCAL_CFLAGS += -DHAVE_SELINUX
+endif
+ifeq ($(TW_OEM_BUILD),true)
+    LOCAL_CFLAGS += -DTW_OEM_BUILD
 endif
 
 ifeq ($(DEVICE_RESOLUTION),)
@@ -95,18 +90,29 @@ LOCAL_MODULE := twrp
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULE_CLASS := RECOVERY_EXECUTABLES
 LOCAL_MODULE_PATH := $(TARGET_RECOVERY_ROOT_OUT)/res
+TWRP_RES_LOC := $(commands_recovery_local_path)/gui/devices/common/res
 
-TWRP_RES_LOC := $(commands_recovery_local_path)/gui/devices
+ifeq ($(TW_CUSTOM_THEME),)
+	TWRP_THEME_LOC := $(commands_recovery_local_path)/gui/devices/$(DEVICE_RESOLUTION)/res
+else
+	TWRP_THEME_LOC := $(TW_CUSTOM_THEME)
+endif
 TWRP_RES_GEN := $(intermediates)/twrp
+ifneq ($(TW_USE_TOOLBOX), true)
+	TWRP_SH_TARGET := /sbin/busybox
+else
+	TWRP_SH_TARGET := /sbin/mksh
+endif
 
 $(TWRP_RES_GEN):
 	mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/res/
-	cp -fr $(TWRP_RES_LOC)/common/res/* $(TARGET_RECOVERY_ROOT_OUT)/res/
-	cp -fr $(TWRP_RES_LOC)/$(DEVICE_RESOLUTION)/res/* $(TARGET_RECOVERY_ROOT_OUT)/res/
+	cp -fr $(TWRP_RES_LOC)/* $(TARGET_RECOVERY_ROOT_OUT)/res/
+	cp -fr $(TWRP_THEME_LOC)/* $(TARGET_RECOVERY_ROOT_OUT)/res/
 	mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/sbin/
-	ln -sf /sbin/busybox $(TARGET_RECOVERY_ROOT_OUT)/sbin/sh
+	ln -sf $(TWRP_SH_TARGET) $(TARGET_RECOVERY_ROOT_OUT)/sbin/sh
 	ln -sf /sbin/pigz $(TARGET_RECOVERY_ROOT_OUT)/sbin/gzip
 	ln -sf /sbin/unpigz $(TARGET_RECOVERY_ROOT_OUT)/sbin/gunzip
+
 
 LOCAL_GENERATED_SOURCES := $(TWRP_RES_GEN)
 LOCAL_SRC_FILES := twrp $(TWRP_RES_GEN)

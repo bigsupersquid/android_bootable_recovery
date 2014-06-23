@@ -55,6 +55,7 @@ std::map<std::string, PageSet*> PageManager::mPageSets;
 PageSet* PageManager::mCurrentSet;
 PageSet* PageManager::mBaseSet = NULL;
 MouseCursor *PageManager::mMouseCursor = NULL;
+HardwareKeyboard *PageManager::mHardwareKeyboard = NULL;
 
 // Helper routine to convert a string to a color declaration
 int ConvertStrToColor(std::string str, COLOR* color)
@@ -65,7 +66,7 @@ int ConvertStrToColor(std::string str, COLOR* color)
 
 	// Translate variables
 	DataManager::GetValue(str, str);
-	
+
 	// Look for some defaults
 	if (str == "black")			return 0;
 	else if (str == "white")	{ color->red = color->green = color->blue = 255; return 0; }
@@ -149,8 +150,8 @@ int ActionObject::SetActionPos(int x, int y, int w, int h)
 	if (x < 0 || y < 0)
 		return -1;
 
-	mActionX = x; 
-	mActionY = y; 
+	mActionX = x;
+	mActionY = y;
 	if (w || h)
 	{
 		mActionW = w;
@@ -447,7 +448,7 @@ int Page::NotifyTouch(TOUCH_STATE state, int x, int y)
 	return ret;
 }
 
-int Page::NotifyKey(int key)
+int Page::NotifyKey(int key, bool down)
 {
 	std::vector<ActionObject*>::reverse_iterator iter;
 
@@ -455,16 +456,17 @@ int Page::NotifyKey(int key)
 	if (mActions.size() == 0)
 		return 1;
 
+	int ret = 1;
 	// We work backwards, from top-most element to bottom-most element
 	for (iter = mActions.rbegin(); iter != mActions.rend(); iter++)
 	{
-		int ret = (*iter)->NotifyKey(key);
-		if (ret == 0)
-			return 0;
-		else if (ret < 0)
-			LOGERR("An action handler has returned an error");
+		ret = (*iter)->NotifyKey(key, down);
+		if (ret < 0) {
+			LOGERR("An action handler has returned an error\n");
+			ret = 1;
+		}
 	}
-	return 1;
+	return ret;
 }
 
 int Page::NotifyKeyboard(int key)
@@ -555,7 +557,7 @@ int PageSet::Load(ZipArchive* package)
 	xml_node<>* parent;
 	xml_node<>* child;
 	xml_node<>* templates;
- 
+
 	parent = mDoc.first_node("recovery");
 	if (!parent)
 		parent = mDoc.first_node("install");
@@ -719,12 +721,12 @@ int PageSet::NotifyTouch(TOUCH_STATE state, int x, int y)
 	return (mCurrentPage ? mCurrentPage->NotifyTouch(state, x, y) : -1);
 }
 
-int PageSet::NotifyKey(int key)
+int PageSet::NotifyKey(int key, bool down)
 {
 	if (mOverlayPage)
-		return (mOverlayPage->NotifyKey(key));
+		return (mOverlayPage->NotifyKey(key, down));
 
-	return (mCurrentPage ? mCurrentPage->NotifyKey(key) : -1);
+	return (mCurrentPage ? mCurrentPage->NotifyKey(key, down) : -1);
 }
 
 int PageSet::NotifyKeyboard(int key)
@@ -790,13 +792,13 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 			LOGERR("Unable to locate ui.xml in zip file\n");
 			goto error;
 		}
-	
+
 		// Allocate the buffer for the file
 		len = mzGetZipEntryUncompLen(ui_xml);
 		xmlFile = (char*) malloc(len + 1);
 		if (!xmlFile)
 			goto error;
-	
+
 		if (!mzExtractZipEntryToBuffer(&zip, ui_xml, (unsigned char*) xmlFile))
 		{
 			LOGERR("Unable to extract ui.xml\n");
@@ -821,7 +823,7 @@ int PageManager::LoadPackage(std::string name, std::string package, std::string 
 	{
 		LOGERR("Package %s failed to load.\n", name.c_str());
 	}
-	
+
 	// The first successful package we loaded is the base
 	if (mBaseSet == NULL)
 		mBaseSet = mCurrentSet;
@@ -964,6 +966,13 @@ int PageManager::Render(void)
 	return res;
 }
 
+HardwareKeyboard *PageManager::GetHardwareKeyboard()
+{
+	if(!mHardwareKeyboard)
+		mHardwareKeyboard = new HardwareKeyboard();
+	return mHardwareKeyboard;
+}
+
 MouseCursor *PageManager::GetMouseCursor()
 {
 	if(!mMouseCursor)
@@ -1002,9 +1011,9 @@ int PageManager::NotifyTouch(TOUCH_STATE state, int x, int y)
 	return (mCurrentSet ? mCurrentSet->NotifyTouch(state, x, y) : -1);
 }
 
-int PageManager::NotifyKey(int key)
+int PageManager::NotifyKey(int key, bool down)
 {
-	return (mCurrentSet ? mCurrentSet->NotifyKey(key) : -1);
+	return (mCurrentSet ? mCurrentSet->NotifyKey(key, down) : -1);
 }
 
 int PageManager::NotifyKeyboard(int key)
