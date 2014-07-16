@@ -24,7 +24,8 @@ LOCAL_SRC_FILES := \
     twrpTar.cpp \
 	twrpDU.cpp \
     twrpDigest.cpp \
-    find_file.cpp
+    find_file.cpp \
+    infomanager.cpp
 
 LOCAL_SRC_FILES += \
     data.cpp \
@@ -333,6 +334,10 @@ LOCAL_C_INCLUDES := bootable/recovery/libmincrypt/includes
 LOCAL_SRC_FILES = adb_install.cpp bootloader.cpp verifier.cpp mtdutils/mtdutils.c legacy_property_service.c
 LOCAL_SHARED_LIBRARIES += libc liblog libcutils libmtdutils
 LOCAL_STATIC_LIBRARIES += libmincrypttwrp
+
+ifneq ($(BOARD_RECOVERY_BLDRMSG_OFFSET),)
+    LOCAL_CFLAGS += -DBOARD_RECOVERY_BLDRMSG_OFFSET=$(BOARD_RECOVERY_BLDRMSG_OFFSET)
+endif
 
 include $(BUILD_SHARED_LIBRARY)
 
