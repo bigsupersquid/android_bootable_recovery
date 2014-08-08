@@ -910,11 +910,9 @@ void DataManager::SetDefaultValues()
 	mValues.insert(make_pair(TW_SKIP_MD5_GENERATE_VAR, make_pair("0", 1)));
 	mValues.insert(make_pair(TW_SDEXT_SIZE, make_pair("512", 1)));
 	mValues.insert(make_pair(TW_SWAP_SIZE, make_pair("512", 1)));
-	mValues.insert(make_pair(TW_EXT_SWAP_SIZE, make_pair("512", 1)));
 	mValues.insert(make_pair(TW_SDPART_FILE_SYSTEM, make_pair("ext4", 1)));
 	mValues.insert(make_pair(TW_OS2SDDATA_SIZE, make_pair("1024", 1)));
 	mValues.insert(make_pair(TW_OS2SDSYSTEM_SIZE, make_pair("768", 1)));
-	mValues.insert(make_pair(TW_FLASH_OS2SD, make_pair("1", 1)));
 	mValues.insert(make_pair(TW_TIME_ZONE_GUISEL, make_pair("CST6;CDT", 1)));
 	mValues.insert(make_pair(TW_TIME_ZONE_GUIOFFSET, make_pair("0", 1)));
 	mValues.insert(make_pair(TW_TIME_ZONE_GUIDST, make_pair("1", 1)));

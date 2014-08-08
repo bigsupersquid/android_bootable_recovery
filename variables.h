@@ -95,11 +95,9 @@
 
 #define TW_SDEXT_SIZE               "tw_sdext_size"
 #define TW_SWAP_SIZE                "tw_swap_size"
-#define TW_EXT_SWAP_SIZE			"tw_ext_swap_size"
 #define TW_FAT_SIZE					"tw_fat_size"
 #define TW_OS2SDDATA_SIZE           "tw_os2sddata_size"
 #define TW_OS2SDSYSTEM_SIZE         "tw_os2sdsystem_size"
-#define TW_FLASH_OS2SD 				"tw_flash_os2sd"
 #define TW_SDPART_FILE_SYSTEM       "tw_sdpart_file_system"
 #define TW_TIME_ZONE_GUISEL         "tw_time_zone_guisel"
 #define TW_TIME_ZONE_GUIOFFSET      "tw_time_zone_guioffset"

@@ -4,6 +4,7 @@ This is the code for fancy OS2SD-oriented TWRP recovery for the LG Optimus V and
 This includes a customized formating utility to aid in the creation of an
 OS2SD partitioned card.
 Experimental, under development.
+now, unified with p500 OS2SD version, to allow multi-device development.
 **Team Win Recovery Project (TWRP)**
 
 The goal of this branch is to rebase TWRP onto AOSP while maintaining as much of the original AOSP code as possible. This goal should allow us to apply updates to the AOSP code going forward with little to no extra work.  With this goal in mind, we will carefully consider any changes needed to the AOSP code before allowing them.  In most cases, instead of changing the AOSP code, we'll create our own functions instead.  The only changes that should be made to AOSP code should be those affecting startup of the recovery and some of the make files.
