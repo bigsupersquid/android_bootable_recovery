@@ -1464,6 +1464,40 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 			operation_end(op_status, simulate);
 			return 0;
 		}
+		if (function == "switchos2sdmode")
+		{
+			int op_status = 0;
+
+			operation_start("Switch OS2SD Mode");
+			if (simulate) {
+				simulate_progress_bar();
+			} else {
+				string os2sd;
+				DataManager::GetValue("os2sd_internal", os2sd);
+				if (os2sd == "OS2SD") {
+					if (TWFunc::Exec_Cmd("cp /etc/fstab_int etc/fstab") < 0)
+					op_status = 1; // fail
+					else if (TWFunc::Exec_Cmd("cp /etc/twrp_int.fstab /etc/recovery.fstab") < 0)
+					op_status = 1; // fail
+					else if (TWFunc::Exec_Cmd("cp /res/ui_int /res/ui.xml") < 0)
+					op_status = 1; // fail
+					else if (TWFunc::Exec_Cmd("pkill recovery") < 0)
+					op_status = 1; // fail
+				}
+				else {
+					if (TWFunc::Exec_Cmd("cp /etc/fstab_sd etc/fstab") < 0)
+					op_status = 1; // fail
+					else if (TWFunc::Exec_Cmd("cp /etc/twrp_sd.fstab /etc/recovery.fstab") < 0)
+					op_status = 1; // fail
+					else if (TWFunc::Exec_Cmd("cp /res/ui_sd /res/ui.xml") < 0)
+					op_status = 1; // fail
+					else if (TWFunc::Exec_Cmd("pkill recovery") < 0)
+					op_status = 1; // fail
+				}
+			}
+			operation_end(op_status, simulate);
+			return 0;
+			}
 	}
 	else
 	{

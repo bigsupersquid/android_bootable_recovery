@@ -154,7 +154,7 @@
 		<variable name="listbox_tz_height" value="189" />
 		<variable name="listbox_background" value="#303030" />
 		<variable name="listbox_spacing" value="12" />
-		<variable name="sd_plus_x" value="187" />
+		<variable name="sd_plus_x" value="275" />
 		<variable name="sdext_text_x" value="56" />
 		<variable name="sdext_text_y" value="83" />
 		<variable name="sdswap_button_y" value="111" />
@@ -218,7 +218,7 @@
 			<object type="text" color="%text_color%">
 				<font resource="font" />
 				<placement x="65" y="3" />
-				<text>TeamWin Recovery v%tw_version%-%os2sd_internal%</text>
+				<text>TWRP v%tw_version%-%os2sd_internal%</text>
 			</object>
 
 			<object type="text" color="%text_color%">

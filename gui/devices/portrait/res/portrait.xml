@@ -2846,6 +2846,7 @@
 			<object type="template" name="header" />
 
 			<object type="text" color="%text_color%">
+				<action function="set">%tw_fat_size%=%tw_storage_free_size%</action>
 				<font resource="font" />
 				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
 				<text>Partition SD Card</text>
@@ -2874,7 +2875,7 @@
 			<object type="text" color="%text_color%">
 				<condition var1="os2sd_internal" op="=" var2="Internal" />
 				<font resource="font" />
-				<placement x="%sdext_text_x%" y="%sdext_text_y%" />
+				<placement x="%center_x%" y="%sdext_text_y%" placement="5" />
 				<text>EXT Size: %tw_sdext_size%</text>
 			</object>
 
@@ -2901,8 +2902,8 @@
 			<object type="text" color="%text_color%">
 				<condition var1="os2sd_internal" op="=" var2="OS2SD" />
 				<font resource="font" />
-				<placement x="%sdext_text_x%" y="%sdext_text_y%" />
-				<text>OS2SD System Size: %tw_os2sdsystem_size%</text>
+				<placement x="%center_x%" y="%sdext_text_y%" placement="5" />
+				<text>OS2SD System: %tw_os2sdsystem_size%</text>
 			</object>
 
 			<object type="button">
@@ -2925,7 +2926,7 @@
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="%sdswap_text_x%" y="%sdswap_text_y%" />
+				<placement x="%center_x%" y="%sdswap_text_y%" placement="5" />
 				<text>Swap Size: %tw_swap_size%</text>
 			</object>
 
@@ -2952,19 +2953,19 @@
 			<object type="text" color="%text_color%">
 				<condition var1="os2sd_internal" op="=" var2="OS2SD" />
 				<font resource="font" />
-				<placement x="%sddata_text_x%" y="%sddata_text_y%" />
-				<text>OS2SD Data Size: %tw_os2sddata_size%</text>
+				<placement x="%center_x%" y="%sddata_text_y%" placement="5" />
+				<text>OS2SD Data: %tw_os2sddata_size%</text>
 			</object>
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="%col1_x%" y="%row12_text_y%" />
+				<placement x="%center_x%" y="%row12_text_y%" placement="5" />
 				<text>You will lose all files on your SD card!</text>
 			</object>
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
-				<placement x="%col1_x%" y="%row13_text_y%" />
+				<placement x="%center_x%" y="%row13_text_y%" placement="5" />
 				<text>This action cannot be undone!</text>
 			</object>
 
@@ -3892,17 +3893,23 @@
 			</object>
 
 			<object type="text" color="%text_color%">
-				<condition var1="os2sd_internal" op="=" var2="Internal" />
 				<font resource="font" />
 				<placement x="%center_x%" y="%row2_text_y%" placement="5"/>
-				<text>This will reboot the recovery into OS2SD mode.</text>
+				<text>This will reboot the recovery</text>
+			</object>
+
+			<object type="text" color="%text_color%">
+				<condition var1="os2sd_internal" op="=" var2="Internal" />
+				<font resource="font" />
+				<placement x="%center_x%" y="%row3_text_y%" placement="5"/>
+				<text>into OS2SD mode.</text>
 			</object>
 
 			<object type="text" color="%text_color%">
 				<condition var1="os2sd_internal" op="=" var2="OS2SD" />
 				<font resource="font" />
-				<placement x="%center_x%" y="%row2_text_y%" placement="5"/>
-				<text>This will reboot the recovery into Internal mode.</text>
+				<placement x="%center_x%" y="%row3_text_y%" placement="5"/>
+				<text>into Internal mode.</text>
 			</object>
 
 			<object type="button">
@@ -3911,40 +3918,27 @@
 				<font resource="font" color="%button_text_color%" />
 				<text>Do Not Switch</text>
 				<image resource="main_button" />
-				<action function="set">tw_page_done=1</action>
+				<action function="page">advanced</action>
+			</object>
+
+			<object type="action">
+				<touch key="home" />
+				<action function="page">main</action>
+			</object>
+
+			<object type="action">
+				<touch key="back" />
+				<action function="page">advanced</action>
 			</object>
 
 			<object type="slider">
 				<placement x="%slider_x%" y="%slider_y%" />
 				<resource base="slider" used="slider-used" touch="slider-touch" />
 				<actions>
-					<action function="set">tw_action=switch_os2sd_internal</action>
+					<action function="page">switch_os2sd_internal</action>
 					<action function="set">tw_action_text1=Switching OS2SD/Internal Mode</action>
 					<action function="set">tw_action_text2=</action>
-					<object type="action">
-						<conditions>
-							<condition var1="os2sd_internal" op="=" var2="os2sd" />
-						</conditions>
-						<actions>
-							<action function="set">os2sd_internal=internal</action>
-							<action function="cmd">cp &quot;/etc/fstab_internal&quot; &quot;/etc/fstab&quot;</action>
-							<action function="cmd">cp &quot;/etc/recovery.fstab_internal&quot; &quot;/etc/recovery.fstab&quot;</action>
-							<action function="cmd">cp &quot;/res/ui_internal.xml&quot; &quot;/res/ui.xml&quot;</action>
-							<action function="cmd">pkill &quot;recovery&quot;</action>
-						</actions>
-					</object>
-					<object type="action">
-						<conditions>
-							<condition var1="tw_os2sd_internal" op="=" var2="internal" />
-						</conditions>
-						<actions>
-							<action function="set">os2sd_internal=os2sd</action>
-							<action function="cmd">cp &quot;/etc/fstab_os2sd&quot; &quot;/etc/fstab&quot;</action>
-							<action function="cmd">cp &quot;/etc/recovery.fstab_os2sd&quot; &quot;/etc/recovery.fstab&quot;</action>
-							<action function="cmd">cp &quot;/res/ui_os2sd.xml&quot; &quot;/res/ui.xml&quot;</action>
-							<action function="cmd">pkill &quot;recovery&quot;</action>
-						</actions>
-					</object>
+					<action function="set">tw_action=switchos2sdmode</action>
 					<action function="page">singleaction_page</action>
 				</actions>
 			</object>
