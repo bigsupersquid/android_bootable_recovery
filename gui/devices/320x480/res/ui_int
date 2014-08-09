@@ -4,7 +4,7 @@
 	<details>
 		<resolution width="320" height="480" />
 		<author>TeamWin</author>
-		<title>Backup Naowz (NOW WITH OS2SD!)</title>
+		<title>Backup Naowz - Internal</title>
 		<description>modifed theme with TechVendetta and bigsupersquid tweaks to handle OS2SD partitioning</description>
 		<preview>preview.jpg</preview>
 	</details>
@@ -197,7 +197,7 @@
 		<variable name="slidervalue_padding" value="8" />
 		<variable name="slidervalue_sliderw" value="4" />
 		<variable name="slidervalue_sliderh" value="20" />
-		<variable name="os2sd_internal" value="OS2SD" />
+		<variable name="os2sd_internal" value="Internal" />
 	</variables>
 
 	<mousecursor>

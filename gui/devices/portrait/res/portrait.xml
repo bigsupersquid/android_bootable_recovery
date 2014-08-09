@@ -2981,6 +2981,7 @@
 					<action function="set">tw_action2_param=tw_zip_location=/sdcard</action>
 					<action function="set">tw_action_text1=Partitioning SD Card...</action>
 					<action function="set">tw_action_text2=This will take a few minutes.</action>
+					<action function="set">tw_action_text3=Wait for it, don't have a cow.</action>
 					<action function="set">tw_complete_text1=Partitioning Complete</action>
 					<action function="page">action_page</action>
 				</actions>
