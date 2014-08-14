@@ -2038,7 +2038,7 @@ int TWPartitionManager::Partition_SDCard(void) {
 			TWFunc::Exec_Cmd(Command);
 		}
 	}
-	
+
 	Update_System_Details();
 	gui_print("Partitioning complete.\n");
 	return true;

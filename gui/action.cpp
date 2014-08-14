@@ -1480,24 +1480,16 @@ int GUIAction::doAction(Action action, int isThreaded /* = 0 */)
 				string os2sd;
 				DataManager::GetValue("os2sd_internal", os2sd);
 				if (os2sd == "OS2SD") {
-					if (TWFunc::Exec_Cmd("cp /etc/fstab_int etc/fstab") < 0)
-					op_status = 1; // fail
-					else if (TWFunc::Exec_Cmd("cp /etc/twrp_int.fstab /etc/recovery.fstab") < 0)
-					op_status = 1; // fail
-					else if (TWFunc::Exec_Cmd("cp /res/ui_int /res/ui.xml") < 0)
-					op_status = 1; // fail
-					else if (TWFunc::Exec_Cmd("pkill recovery") < 0)
-					op_status = 1; // fail
+					TWFunc::Exec_Cmd("cp /etc/fstab_int etc/fstab");
+					TWFunc::Exec_Cmd("cp /etc/twrp_int.fstab /etc/recovery.fstab");
+					TWFunc::Exec_Cmd("cp /res/ui_int /res/ui.xml");
+					TWFunc::Exec_Cmd("pkill recovery");
 				}
 				else {
-					if (TWFunc::Exec_Cmd("cp /etc/fstab_sd etc/fstab") < 0)
-					op_status = 1; // fail
-					else if (TWFunc::Exec_Cmd("cp /etc/twrp_sd.fstab /etc/recovery.fstab") < 0)
-					op_status = 1; // fail
-					else if (TWFunc::Exec_Cmd("cp /res/ui_sd /res/ui.xml") < 0)
-					op_status = 1; // fail
-					else if (TWFunc::Exec_Cmd("pkill recovery") < 0)
-					op_status = 1; // fail
+					TWFunc::Exec_Cmd("cp /etc/fstab_sd etc/fstab");
+					TWFunc::Exec_Cmd("cp /etc/twrp_sd.fstab /etc/recovery.fstab");
+					TWFunc::Exec_Cmd("cp /res/ui_sd /res/ui.xml");
+					TWFunc::Exec_Cmd("pkill recovery");
 				}
 			}
 			operation_end(op_status, simulate);

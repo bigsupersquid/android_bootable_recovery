@@ -2846,7 +2846,6 @@
 			<object type="template" name="header" />
 
 			<object type="text" color="%text_color%">
-				<action function="set">%tw_fat_size%=%tw_storage_free_size%</action>
 				<font resource="font" />
 				<placement x="%center_x%" y="%row1_header_y%" placement="5" />
 				<text>Partition SD Card</text>
@@ -2981,7 +2980,6 @@
 					<action function="set">tw_action2_param=tw_zip_location=/sdcard</action>
 					<action function="set">tw_action_text1=Partitioning SD Card...</action>
 					<action function="set">tw_action_text2=This will take a few minutes.</action>
-					<action function="set">tw_action_text3=Wait for it, don't have a cow.</action>
 					<action function="set">tw_complete_text1=Partitioning Complete</action>
 					<action function="page">action_page</action>
 				</actions>
