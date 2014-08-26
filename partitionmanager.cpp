@@ -58,6 +58,12 @@ int TWPartitionManager::Process_Fstab(string Fstab_Filename, bool Display_Error)
 	char fstab_line[MAX_FSTAB_LINE_LENGTH];
 	TWPartition* settings_partition = NULL;
 	TWPartition* andsec_partition = NULL;
+	std::vector<TWPartition*>::iterator iter;
+
+	// clear Partitions vector for OS2SD switching.
+	// Otherwise, fstabs stack up one after another when switched.
+	// Normally, TWRP only runs this routine once per each reboot of recovery.
+	Partitions.clear();
 
 	fstabFile = fopen(Fstab_Filename.c_str(), "rt");
 	if (fstabFile == NULL) {

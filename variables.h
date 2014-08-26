@@ -98,6 +98,7 @@
 #define TW_FAT_SIZE					"tw_fat_size"
 #define TW_OS2SDDATA_SIZE           "tw_os2sddata_size"
 #define TW_OS2SDSYSTEM_SIZE         "tw_os2sdsystem_size"
+#define TW_OS2SD_INTERNAL			"tw_os2sd_internal"
 #define TW_SDPART_FILE_SYSTEM       "tw_sdpart_file_system"
 #define TW_TIME_ZONE_GUISEL         "tw_time_zone_guisel"
 #define TW_TIME_ZONE_GUIOFFSET      "tw_time_zone_guioffset"

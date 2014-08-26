@@ -2782,7 +2782,7 @@
 			</object>
 
 			<object type="button">
-				<condition var1="os2sd_internal" op="=" var2="Internal" />
+				<condition var1="tw_os2sd_internal" op="=" var2="Internal" />
 				<highlight color="%highlight_color%" />
 				<placement x="%col2_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2792,7 +2792,7 @@
 			</object>
 
 			<object type="button">
-				<condition var1="os2sd_internal" op="=" var2="OS2SD" />
+				<condition var1="tw_os2sd_internal" op="=" var2="OS2SD" />
 				<highlight color="%highlight_color%" />
 				<placement x="%col2_x%" y="%row4_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2852,7 +2852,7 @@
 			</object>
 
 			<object type="button">
-				<condition var1="os2sd_internal" op="=" var2="Internal" />
+				<condition var1="tw_os2sd_internal" op="=" var2="Internal" />
 				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%row1_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2862,7 +2862,7 @@
 			</object>
 
 			<object type="button">
-				<condition var1="os2sd_internal" op="=" var2="Internal" />
+				<condition var1="tw_os2sd_internal" op="=" var2="Internal" />
 				<highlight color="%highlight_color%" />
 				<placement x="%sd_plus_x%" y="%row1_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2872,14 +2872,14 @@
 			</object>
 
 			<object type="text" color="%text_color%">
-				<condition var1="os2sd_internal" op="=" var2="Internal" />
+				<condition var1="tw_os2sd_internal" op="=" var2="Internal" />
 				<font resource="font" />
 				<placement x="%center_x%" y="%sdext_text_y%" placement="5" />
 				<text>EXT Size: %tw_sdext_size%</text>
 			</object>
 
 			<object type="button">
-				<condition var1="os2sd_internal" op="=" var2="OS2SD" />
+				<condition var1="tw_os2sd_internal" op="=" var2="OS2SD" />
 				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%row1_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2889,7 +2889,7 @@
 			</object>
 
 			<object type="button">
-				<condition var1="os2sd_internal" op="=" var2="OS2SD" />
+				<condition var1="tw_os2sd_internal" op="=" var2="OS2SD" />
 				<highlight color="%highlight_color%" />
 				<placement x="%sd_plus_x%" y="%row1_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2899,7 +2899,7 @@
 			</object>
 
 			<object type="text" color="%text_color%">
-				<condition var1="os2sd_internal" op="=" var2="OS2SD" />
+				<condition var1="tw_os2sd_internal" op="=" var2="OS2SD" />
 				<font resource="font" />
 				<placement x="%center_x%" y="%sdext_text_y%" placement="5" />
 				<text>OS2SD System: %tw_os2sdsystem_size%</text>
@@ -2930,7 +2930,7 @@
 			</object>
 
 			<object type="button">
-				<condition var1="os2sd_internal" op="=" var2="OS2SD" />
+				<condition var1="tw_os2sd_internal" op="=" var2="OS2SD" />
 				<highlight color="%highlight_color%" />
 				<placement x="%col1_x%" y="%sddata_button_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2940,7 +2940,7 @@
 			</object>
 
 			<object type="button">
-				<condition var1="os2sd_internal" op="=" var2="OS2SD" />
+				<condition var1="tw_os2sd_internal" op="=" var2="OS2SD" />
 				<highlight color="%highlight_color%" />
 				<placement x="%sd_plus_x%" y="%sddata_button_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -2950,7 +2950,7 @@
 			</object>
 
 			<object type="text" color="%text_color%">
-				<condition var1="os2sd_internal" op="=" var2="OS2SD" />
+				<condition var1="tw_os2sd_internal" op="=" var2="OS2SD" />
 				<font resource="font" />
 				<placement x="%center_x%" y="%sddata_text_y%" placement="5" />
 				<text>OS2SD Data: %tw_os2sddata_size%</text>
@@ -3888,30 +3888,31 @@
 			<object type="text" color="%text_color%">
 				<font resource="font" />
 				<placement x="%center_x%" y="%row1_header_y%" placement="5"/>
-				<text>Switch %os2sd_internal% Mode?</text>
+				<text>Switch OS2SD/Internal Mode?</text>
 			</object>
 
 			<object type="text" color="%text_color%">
 				<font resource="font" />
 				<placement x="%center_x%" y="%row2_text_y%" placement="5"/>
-				<text>This will reboot the recovery</text>
+				<text>This will reset the recovery</text>
 			</object>
 
 			<object type="text" color="%text_color%">
-				<condition var1="os2sd_internal" op="=" var2="Internal" />
+				<condition var1="tw_os2sd_internal" op="=" var2="Internal" />
 				<font resource="font" />
 				<placement x="%center_x%" y="%row3_text_y%" placement="5"/>
 				<text>into OS2SD mode.</text>
 			</object>
 
 			<object type="text" color="%text_color%">
-				<condition var1="os2sd_internal" op="=" var2="OS2SD" />
+				<condition var1="tw_os2sd_internal" op="=" var2="OS2SD" />
 				<font resource="font" />
 				<placement x="%center_x%" y="%row3_text_y%" placement="5"/>
 				<text>into Internal mode.</text>
 			</object>
 
 			<object type="button">
+				<condition var1="tw_os2sd_internal" op="=" var2="Internal" />
 				<highlight color="%highlight_color%" />
 				<placement x="%col_center_x%" y="%row3_y%" />
 				<font resource="font" color="%button_text_color%" />
@@ -3934,11 +3935,12 @@
 				<placement x="%slider_x%" y="%slider_y%" />
 				<resource base="slider" used="slider-used" touch="slider-touch" />
 				<actions>
-					<action function="page">switch_os2sd_internal</action>
+					<action function="set">tw_back=advanced</action>
+					<action function="set">tw_action=switchos2sdmode</action>
 					<action function="set">tw_action_text1=Switching OS2SD/Internal Mode</action>
 					<action function="set">tw_action_text2=</action>
-					<action function="set">tw_action=switchos2sdmode</action>
-					<action function="page">singleaction_page</action>
+					<action function="set">tw_complete_text1=Done.</action>
+					<action function="page">action_page</action>
 				</actions>
 			</object>
 

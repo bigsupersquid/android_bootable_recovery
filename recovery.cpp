@@ -935,6 +935,7 @@ int
 main(int argc, char **argv) {
     // Recovery needs to install world-readable files, so clear umask
     // set by init
+
     umask(0);
 
     time_t start = time(NULL);
@@ -955,8 +956,8 @@ main(int argc, char **argv) {
         return 0;
     }
 
-    printf("Starting TWRP %s on %s", TW_VERSION_STR, ctime(&start));
-
+    printf("Starting TWRP %s on %s\n", TW_VERSION_STR, ctime(&start));
+   
     Device* device = make_device();
     ui = device->GetUI();
 
@@ -966,16 +967,22 @@ main(int argc, char **argv) {
 
 	// Load default values to set DataManager constants and handle ifdefs
 	DataManager_LoadDefaults();
+	
 	printf("Starting the UI...");
 	gui_init();
 	printf("=> Linking mtab\n");
 	symlink("/proc/mounts", "/etc/mtab");
-	printf("=> Processing recovery.fstab\n");
+	
+/* OS2SD forces this into DataManager_LoadDefaults.
+
+ 	printf("=> Processing recovery.fstab\n");
 	if (!PartitionManager.Process_Fstab("/etc/recovery.fstab", 1)) {
 		LOGE("Failing out of recovery due to problem with recovery.fstab.\n");
 		//return -1;
 	}
 	PartitionManager.Output_Partition_Logging();
+*/
+
 	// Load up all the resources
 	gui_loadResources();
 
@@ -993,10 +1000,9 @@ main(int argc, char **argv) {
     int wipe_data = 0, wipe_cache = 0, show_text = 0;
     bool just_exit = false;
 	bool perform_backup = false;
-
     int arg;
     while ((arg = getopt_long(argc, argv, "", OPTIONS, NULL)) != -1) {
-        switch (arg) {
+		switch (arg) {
         case 'p': previous_runs = atoi(optarg); break;
         case 's': send_intent = optarg; break;
         case 'u': update_package = optarg; break;
@@ -1134,6 +1140,7 @@ main(int argc, char **argv) {
         if (!OpenRecoveryScript::Insert_ORS_Command("wipe cache\n"))
 			status = INSTALL_ERROR;
         if (status != INSTALL_SUCCESS) ui->Print("Cache wipe failed.\n");
+
     } else if (!just_exit) {
         status = INSTALL_NONE;  // No command specified
         ui->SetBackground(RecoveryUI::NO_COMMAND);

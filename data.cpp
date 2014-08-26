@@ -942,13 +942,13 @@ void DataManager::SetDefaultValues()
 	mValues.insert(make_pair("tw_background_thread_running", make_pair("0", 0)));
 	mValues.insert(make_pair(TW_RESTORE_FILE_DATE, make_pair("0", 0)));
 	mValues.insert(make_pair("tw_military_time", make_pair("0", 1)));
-//#ifdef TW_NO_SCREEN_TIMEOUT
+#ifdef TW_NO_SCREEN_TIMEOUT
 	mValues.insert(make_pair("tw_screen_timeout_secs", make_pair("0", 1)));
 	mValues.insert(make_pair("tw_no_screen_timeout", make_pair("1", 1)));
-//#else
-//	mValues.insert(make_pair("tw_screen_timeout_secs", make_pair("60", 1)));
-//	mValues.insert(make_pair("tw_no_screen_timeout", make_pair("0", 1)));
-//#endif
+#else
+	mValues.insert(make_pair("tw_screen_timeout_secs", make_pair("60", 1)));
+	mValues.insert(make_pair("tw_no_screen_timeout", make_pair("0", 1)));
+#endif
 	mValues.insert(make_pair("tw_gui_done", make_pair("0", 0)));
 	mValues.insert(make_pair("tw_encrypt_backup", make_pair("0", 0)));
 #ifdef TW_BRIGHTNESS_PATH
@@ -998,6 +998,20 @@ void DataManager::SetDefaultValues()
 	LOGINFO("TW_EXCLUDE_ENCRYPTED_BACKUPS := true\n");
 	mValues.insert(make_pair("tw_include_encrypted_backup", make_pair("0", 0)));
 #endif
+	// force OS2SD mode on reset defaults
+	mValues.insert(make_pair(TW_OS2SD_INTERNAL, make_pair("OS2SD", 0)));
+	SetValue("tw_os2sd_internal", "OS2SD", 0);
+	TWFunc::copy_file("/etc/twrp_sd.fstab", "/cache/recovery/recovery.fstab", 0644);
+	TWFunc::copy_file("/etc/twrp_sd.fstab","/etc/recovery.fstab",0644);
+	TWFunc::copy_file("/etc/twrp_sd.fstab","/etc/twrp.fstab",0644);
+	printf("=> Processing recovery.fstab\n");
+	if (!PartitionManager.Process_Fstab("/etc/recovery.fstab", 1)) {
+		printf("Failing out of recovery due to problem with new recovery.fstab.\n");
+		//return -1;
+	}
+	PartitionManager.Output_Partition_Logging();
+	sync();
+
 }
 
 // Magic Values
@@ -1115,6 +1129,8 @@ void DataManager::Output_Version(void)
 	sync();
 	LOGINFO("Version number saved to '%s'\n", Path.c_str());
 }
+
+
 
 void DataManager::ReadSettingsFile(void)
 {
